@@ -31,6 +31,7 @@ class VideoProcessor(object):
 
         return img, orig_img, im_name, im_dim_list
 
+
 class ObjectDetection(object):
     def __init__(self, batchSize=1):
         self.det_model = Darknet("yolo/cfg/yolov3-spp.cfg")

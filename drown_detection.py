@@ -1,6 +1,6 @@
 from estimator.opt import opt as args
 import cv2
-from processor import ImageProcessor
+from processor import ImageProcessor as ImageProcessor
 
 IP = ImageProcessor()
 nece_point = [0, 11, 12]
@@ -25,21 +25,23 @@ def run(cam_num):
         frame = cv2.resize(frame, (540, 360))
 
         if ret:
-            key_point, img, _ = IP.process_img(frame)
+            key_point, img_fast, img = IP.process_img(frame)
             if len(img) > 0 and len(key_point) > 0:
-                coord = [key_point[idx] for idx in nece_point]
-                state = judge_slope(coord)
-                print("The swimmer's body is {}".format(state))
-                if state == "vertical":
-                    pass
-                    #vertical detection
-                else:
-                    pass
-                    #horizontal detection
-
+                # coord = [key_point[idx] for idx in nece_point]
+                # state = judge_slope(coord)
+                # print("The swimmer's body is {}".format(state))
+                # if state == "vertical":
+                #     pass
+                #     # vertical detection
+                # else:
+                #     pass
+                #     # horizontal detection
+                #
+                cv2.imshow("result_fast", img_fast)
                 cv2.imshow("result", img)
                 cv2.waitKey(1)
             else:
+                cv2.imshow("result_fast", img_fast)
                 cv2.imshow("result", img)
                 cv2.waitKey(1)
         else:
@@ -48,5 +50,5 @@ def run(cam_num):
 
 
 if __name__ == '__main__':
-    video_path = "Video/48.mp4"
+    video_path = "Video/multiple.mp4"
     run(video_path)

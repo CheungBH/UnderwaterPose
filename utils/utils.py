@@ -59,44 +59,6 @@ class Utils(object):
         image_tensor = torch.from_numpy(image_array).float()
         return image_tensor
 
-    @staticmethod
-    def get_decimal(string):
-        if "." in string:
-            idx = string.index(".")
-            if len(string[idx+1:]) >= 2:
-                return string[idx+1: idx+3]
-            else:
-                return string[idx+1:] + "0"*(2-len(string[idx+1:]))
-        else:
-            return "00"
-
-    @staticmethod
-    def get_integer(string):
-        if "." in string:
-            idx = string.index(".")
-            if len(string[:idx]) >= 2:
-                return string[idx-2: idx]
-            else:
-                return "0"*(2-len(string[:idx])) + string[:idx]
-        else:
-            return string.zfill(2)
-
-    @staticmethod
-    def to_unity_string(string):
-        integer = Utils.get_integer(str(string))
-        decimal = Utils.get_decimal(str(string))
-        return integer + decimal
-
-    @staticmethod
-    def point_to_string(point):
-        point = str(point * 100)
-        return str(point[:4]).zfill(4)
-
-    @staticmethod
-    def time_to_string(time):
-        integer = str(int(time)).zfill(2)
-        decimal = Utils.get_decimal(time)
-        return integer + str(decimal * 100)[:2].zfill(2)
 
 
 if __name__ == '__main__':
