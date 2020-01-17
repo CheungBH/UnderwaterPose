@@ -1,14 +1,40 @@
 from tracker.sort import Sort
+import torch
+from utils.utils import Utils
+
+Tensor = torch.cuda.FloatTensor
 
 
 class ObjectTracker(object):
     def __init__(self):
         self.tracker = Sort()
-        self.ske_bbox = []
+        self.sorted_skeletons = []
+        self.track_boxes = []
+        self.skeletons = []
+        self.bboxes = []
+        self.id2bbox = {}
+        self.id2ske = {}
 
-    def locate_skeleton(self, bboxes, skeletons):
-        for skeleton in skeletons:
-            pass
+    def __match(self):
+        ske_center = [torch.mean(self.skeletons[idx], dim=0) for idx in range(len(self.skeletons))]
+        box_center = [((list(self.id2bbox.values())[idx][0] + list(self.id2bbox.values())[idx][2]) / 2,
+                       (list(self.id2bbox.values())[idx][1] + list(self.id2bbox.values())[idx][3]) / 2)
+                      for idx in range(len(self.id2bbox))]
+        self.sorted_skeletons = []
+        for s_center in ske_center:
+            bs_dis = [Utils.cal_dis(s_center, b_center) for b_center in box_center]
+            match_id = bs_dis.index(min(bs_dis))
+            self.sorted_skeletons.append(self.skeletons[match_id])
+        self.id2ske = {int(list(self.id2bbox.keys())[idx]): self.sorted_skeletons[idx] for idx in range(len(self.id2bbox))}
 
-    def judge_in_bbox(self, coord, box):
-        pass
+    def __track_bbox(self):
+        box_tensor = Tensor([box + [0.999, 0.999, 0] for box in self.bboxes])
+        self.tracked_bbox = self.tracker.update(box_tensor.cpu()).tolist()
+        self.id2bbox = {int(box[4]): [box[0], box[1], box[2], box[3]] for box in self.tracked_bbox}
+
+    def track(self, bboxes, skeletons):
+        self.bboxes = bboxes.tolist()
+        self.skeletons = skeletons
+        self.__track_bbox()
+        self.__match()
+        return self.id2ske, self.id2bbox
