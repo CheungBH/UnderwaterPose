@@ -16,7 +16,7 @@ class DrownDetector(object):
         self.object_detector = ObjectDetectionYolo()
         self.BBV = BBoxVisualizer()
         self.IDV = IDVisualizer()
-        self.OT = ObjectTracker()
+        self.object_tracker = ObjectTracker()
         self.video_path = path
         self.cap = cv2.VideoCapture(self.video_path)
         self.img = []
@@ -31,23 +31,32 @@ class DrownDetector(object):
                 img, orig_img, im_name, im_dim_list = self.video_processor.process(frame)
                 with torch.no_grad():
                     inps, orig_img, boxes, scores, pt1, pt2 = self.object_detector.process(img, orig_img, im_name, im_dim_list)
-                    cv2.imshow("bbox", self.BBV.visualize(boxes, copy.deepcopy(frame)))
-                    key_points, self.img, self.img_black = self.pose_estimator.process_img(inps, orig_img, boxes, scores, pt1, pt2)
-                    id2ske, id2bbox = self.OT.track(boxes, key_points)
-                    cv2.imshow("id", self.IDV.plot(id2bbox, copy.deepcopy(frame)))
-                    if len(img) > 0 and len(key_points) > 0:
-                        # for key_point in key_points:
+                    if boxes is not None:
+                        # cv2.imshow("bbox", self.BBV.visualize(boxes, copy.deepcopy(frame)))
+                        key_points, self.img, self.img_black = self.pose_estimator.process_img(inps, orig_img, boxes, scores, pt1, pt2)
+                        if len(key_points) > 0:
+                            id2ske, id2bbox = self.object_tracker.track(boxes, key_points)
+                            cv2.imshow("id", self.IDV.plot(id2bbox, copy.deepcopy(frame)))
+                            # for key_point in key_points:
 
-                        self.__show_img()
+                            self.__show_img()
+                        else:
+                            self.__show_img()
                     else:
+                        # cv2.imshow("bbox", frame)
+                        cv2.imshow("id", frame)
+                        self.img, self.img_black = frame, frame
                         self.__show_img()
                 cnt += 1
+                print(cnt)
             else:
                 self.cap.release()
                 cv2.destroyAllWindows()
                 break
 
     def __show_img(self):
+        # cv2.moveWindow("bbox", 600, 90)
+        # cv2.moveWindow("id", 600, 540)
         cv2.imshow("result", self.img)
         cv2.moveWindow("result", 1200, 90)
         cv2.imshow("result_black", self.img_black)

@@ -8,7 +8,7 @@ Tensor = torch.cuda.FloatTensor
 class ObjectTracker(object):
     def __init__(self):
         self.tracker = Sort()
-        self.sorted_skeletons = []
+        self.sorted = []
         self.track_boxes = []
         self.skeletons = []
         self.bboxes = []
@@ -20,12 +20,19 @@ class ObjectTracker(object):
         box_center = [((list(self.id2bbox.values())[idx][0] + list(self.id2bbox.values())[idx][2]) / 2,
                        (list(self.id2bbox.values())[idx][1] + list(self.id2bbox.values())[idx][3]) / 2)
                       for idx in range(len(self.id2bbox))]
-        self.sorted_skeletons = []
-        for s_center in ske_center:
-            bs_dis = [Utils.cal_dis(s_center, b_center) for b_center in box_center]
-            match_id = bs_dis.index(min(bs_dis))
-            self.sorted_skeletons.append(self.skeletons[match_id])
-        self.id2ske = {int(list(self.id2bbox.keys())[idx]): self.sorted_skeletons[idx] for idx in range(len(self.id2bbox))}
+        if len(ske_center) < len(box_center):
+            self.id2ske = {}
+            for idx, s_center in enumerate(ske_center):
+                bs_dis = [Utils.cal_dis(s_center, b_center) for b_center in box_center]
+                match_id = bs_dis.index(min(bs_dis))
+                self.id2ske[list(self.id2bbox.keys())[match_id]] = self.skeletons[idx]
+        else:
+            sorted_skeleton = []
+            for b_center in box_center:
+                bs_dis = [Utils.cal_dis(s_center, b_center) for s_center in ske_center]
+                match_id = bs_dis.index(min(bs_dis))
+                sorted_skeleton.append(self.skeletons[match_id])
+            self.id2ske = {int(list(self.id2bbox.keys())[idx]): sorted_skeleton[idx] for idx in range(len(self.id2bbox))}
 
     def __track_bbox(self):
         box_tensor = Tensor([box + [0.999, 0.999, 0] for box in self.bboxes])
