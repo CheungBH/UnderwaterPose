@@ -1,8 +1,8 @@
 # For yolo
 confidence = 0.05
 num_classes = 80
-nms_thresh = 0.6
-input_size = 608
+nms_thresh = 0.33
+input_size = 416
 
 # For pose estimation
 input_height = 320
@@ -15,3 +15,4 @@ pose_batch = 80
 
 # For detection
 video_path = "Video/multiple.mp4"
+frame_size = (540, 360)

@@ -1,3 +1,4 @@
+import cv2
 
 
 class BBoxVisualizer(object):
@@ -6,4 +7,5 @@ class BBoxVisualizer(object):
 
     def visualize(self, bboxes, img):
         for bbox in bboxes:
-            pass
+            img = cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), self.color, 2)
+        return img

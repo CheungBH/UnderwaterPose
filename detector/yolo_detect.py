@@ -34,8 +34,8 @@ class VideoProcessor(object):
 
 class ObjectDetectionYolo(object):
     def __init__(self, batchSize=1):
-        self.det_model = Darknet("yolo/cfg/yolov3-spp.cfg")
-        self.det_model.load_weights('models/yolo/yolov3-spp.weights')
+        self.det_model = Darknet("yolo/cfg/yolov3-swim-416.cfg")
+        self.det_model.load_weights('models/yolo/yolov3-swim-416_final.weights')
         self.det_model.net_info['height'] = config.input_size
         self.det_inp_dim = int(self.det_model.net_info['height'])
         assert self.det_inp_dim % 32 == 0
