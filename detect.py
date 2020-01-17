@@ -36,7 +36,8 @@ class DrownDetector(object):
                         key_points, self.img, self.img_black = self.pose_estimator.process_img(inps, orig_img, boxes, scores, pt1, pt2)
                         if len(key_points) > 0:
                             id2ske, id2bbox = self.object_tracker.track(boxes, key_points)
-                            cv2.imshow("id", self.IDV.plot(id2bbox, copy.deepcopy(frame)))
+                            cv2.imshow("id_bbox", self.IDV.plot_bbox_id(id2bbox, copy.deepcopy(frame)))
+                            cv2.imshow("id_ske", self.IDV.plot_skeleton_id(id2ske, copy.deepcopy(frame)))
                             # for key_point in key_points:
 
                             self.__show_img()
