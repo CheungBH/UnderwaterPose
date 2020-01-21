@@ -14,5 +14,5 @@ pose_batch = 80
 
 
 # For detection
-video_path = "Video/45.mp4"
+video_path = "Video/45_Trim.mp4"
 frame_size = (540, 360)
