@@ -45,7 +45,7 @@ class DrownDetector(object):
                             self.__show_img()
                     else:
                         # cv2.imshow("bbox", frame)
-                        cv2.imshow("id", frame)
+                        # cv2.imshow("id", frame)
                         self.img, self.img_black = frame, frame
                         self.__show_img()
                 cnt += 1
