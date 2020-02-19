@@ -7,31 +7,6 @@ from yolo.darknet import Darknet
 import cv2
 
 
-class VideoProcessor(object):
-    def __init__(self):
-        self.in_dim = int(config.input_size)
-
-    def process(self, frame):
-        img = []
-        orig_img = []
-        im_name = []
-        im_dim_list = []
-        img_k, orig_img_k, im_dim_list_k = prep_frame(frame, self.in_dim)
-
-        img.append(img_k)
-        orig_img.append(orig_img_k)
-        im_name.append('0.jpg')
-        im_dim_list.append(im_dim_list_k)
-
-        with torch.no_grad():
-            # Human Detection
-            img = torch.cat(img)
-            im_dim_list = torch.FloatTensor(im_dim_list).repeat(1, 2)
-            im_dim_list_ = im_dim_list
-
-        return img, orig_img, im_name, im_dim_list
-
-
 class ObjectDetectionYolo(object):
     def __init__(self, batchSize=1):
         self.det_model = Darknet("yolo/cfg/yolov3-swim-416.cfg")
@@ -45,6 +20,24 @@ class ObjectDetectionYolo(object):
 
         self.stopped = False
         self.batchSize = batchSize
+
+    def __video_process(self, frame):
+        img = []
+        orig_img = []
+        im_name = []
+        im_dim_list = []
+        img_k, orig_img_k, im_dim_list_k = prep_frame(frame, int(config.input_size))
+
+        img.append(img_k)
+        orig_img.append(orig_img_k)
+        im_name.append('0.jpg')
+        im_dim_list.append(im_dim_list_k)
+
+        with torch.no_grad():
+            # Human Detection
+            img = torch.cat(img)
+            im_dim_list = torch.FloatTensor(im_dim_list).repeat(1, 2)
+        return img, orig_img, im_name, im_dim_list
 
     def __get_bbox(self, img, orig_img, im_name, im_dim_list):
         with torch.no_grad():
@@ -131,7 +124,8 @@ class ObjectDetectionYolo(object):
             pt2[i] = bottomRight
         return inps, pt1, pt2
 
-    def process(self, img, orig_img, im_name, im_dim_list):
+    def process(self, frame):
+        img, orig_img, im_name, im_dim_list = self.__video_process(frame)
         inps, orig_img, im_name, boxes, scores, pt1, pt2 = self.__get_bbox(img, orig_img, im_name, im_dim_list)
         inps, orig_img, im_name, boxes, scores, pt1, pt2 = self.__crop_bbox(inps, orig_img, im_name,
                                                                                             boxes, scores, pt1, pt2)

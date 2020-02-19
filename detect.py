@@ -1,5 +1,5 @@
 from estimator.pose_estimator import PoseEstimator
-from detector.yolo_detect import ObjectDetectionYolo, VideoProcessor
+from detector.yolo_detect import ObjectDetectionYolo
 from detector.visualize import BBoxVisualizer
 from tracker.track import ObjectTracker
 from tracker.visualize import IDVisualizer
@@ -12,7 +12,6 @@ import copy
 class DrownDetector(object):
     def __init__(self, path=config.video_path):
         self.pose_estimator = PoseEstimator()
-        self.video_processor = VideoProcessor()
         self.object_detector = ObjectDetectionYolo()
         self.BBV = BBoxVisualizer()
         self.IDV = IDVisualizer()
@@ -28,9 +27,8 @@ class DrownDetector(object):
             ret, frame = self.cap.read()
             if ret:
                 frame = cv2.resize(frame, config.frame_size)
-                img, orig_img, im_name, im_dim_list = self.video_processor.process(frame)
                 with torch.no_grad():
-                    inps, orig_img, boxes, scores, pt1, pt2 = self.object_detector.process(img, orig_img, im_name, im_dim_list)
+                    inps, orig_img, boxes, scores, pt1, pt2 = self.object_detector.process(frame)
                     if boxes is not None:
                         # cv2.imshow("bbox", self.BBV.visualize(boxes, copy.deepcopy(frame)))
                         key_points, self.img, self.img_black = self.pose_estimator.process_img(inps, orig_img, boxes, scores, pt1, pt2)
