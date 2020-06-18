@@ -1,68 +1,45 @@
-from estimator.pose_estimator import PoseEstimator
-from detector.yolo_detect import ObjectDetectionYolo
-from detector.visualize import BBoxVisualizer
-from tracker.track import ObjectTracker
-from tracker.visualize import IDVisualizer
-from config import config
-import torch
+#-*- coding: utf-8 -*-
+
+from human_detection import ImgProcessor
 import cv2
-import copy
+from config.config import video_path, frame_size
+import numpy as np
+
+body_parts = ["Nose", "Left eye", "Right eye", "Left ear", "Right ear", "Left shoulder", "Right shoulder", "Left elbow",
+              "Right elbow", "Left wrist", "Right wrist", "Left hip", "Right hip", "Left knee", "Right knee",
+              "Left ankle", "Right ankle"]
+body_dict = {name: idx for idx, name in enumerate(body_parts)}
+
+IP = ImgProcessor()
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
 
 
-class DrownDetector(object):
-    def __init__(self, path=config.video_path):
-        self.pose_estimator = PoseEstimator()
-        self.object_detector = ObjectDetectionYolo()
-        self.BBV = BBoxVisualizer()
-        self.IDV = IDVisualizer()
-        self.object_tracker = ObjectTracker()
-        self.video_path = path
-        self.cap = cv2.VideoCapture(self.video_path)
-        self.img = []
-        self.img_black = []
+class DrownDetector:
+    def __init__(self, video_path):
+        self.cap = cv2.VideoCapture(video_path)
+        self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
+        self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 
-    def process(self):
+    def process_video(self):
         cnt = 0
         while True:
             ret, frame = self.cap.read()
+            frame = cv2.resize(frame, frame_size)
+            cnt += 1
             if ret:
-                frame = cv2.resize(frame, config.frame_size)
-                with torch.no_grad():
-                    inps, orig_img, boxes, scores, pt1, pt2 = self.object_detector.process(frame)
-                    if boxes is not None:
-                        # cv2.imshow("bbox", self.BBV.visualize(boxes, copy.deepcopy(frame)))
-                        key_points, self.img, self.img_black = self.pose_estimator.process_img(inps, orig_img, boxes, scores, pt1, pt2)
-                        if len(key_points) > 0:
-                            id2ske, id2bbox = self.object_tracker.track(boxes, key_points)
-                            cv2.imshow("id_bbox", self.IDV.plot_bbox_id(id2bbox, copy.deepcopy(frame)))
-                            cv2.imshow("id_ske", self.IDV.plot_skeleton_id(id2ske, copy.deepcopy(frame)))
-                            # for key_point in key_points:
-
-                            self.__show_img()
-                        else:
-                            self.__show_img()
-                    else:
-                        # cv2.imshow("bbox", frame)
-                        # cv2.imshow("id", frame)
-                        self.img, self.img_black = frame, frame
-                        self.__show_img()
-                cnt += 1
-                print(cnt)
+                fgmask = self.fgbg.apply(frame)
+                background = self.fgbg.getBackgroundImage()
+                diff = cv2.absdiff(frame, background)
+                enhanced = cv2.filter2D(diff, -1, enhance_kernel)
+                kps, img, black_img, boxes, kps_score = IP.process_img(frame, enhanced)
+                cv2.imshow("res", img)
+                cv2.imshow("res_black", black_img)
+                cv2.waitKey(1)
             else:
                 self.cap.release()
-                cv2.destroyAllWindows()
                 break
-
-    def __show_img(self):
-        # cv2.moveWindow("bbox", 600, 90)
-        # cv2.moveWindow("id", 600, 540)
-        cv2.imshow("result", self.img)
-        cv2.moveWindow("result", 1200, 90)
-        cv2.imshow("result_black", self.img_black)
-        cv2.moveWindow("result_black", 1200, 540)
-        cv2.waitKey(1)
 
 
 if __name__ == '__main__':
-    DD = DrownDetector()
-    DD.process()
+    DrownDetector(video_path).process_video()

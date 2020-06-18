@@ -44,10 +44,13 @@ test/data/legacy_serialized.pt
 saved
 data
 test
-model/pre_train_model
+weights
 */**/__init__.py
 */*.pth
 */*.onnx
 SPPE
-yolo
 Video
+img
+__pycache__
+model.txt
+config/config.py
