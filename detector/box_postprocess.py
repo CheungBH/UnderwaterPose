@@ -55,6 +55,6 @@ def crop_from_dets(img, boxes, inps, pt1, pt2):
     return inps, pt1, pt2
 
 
-def merge_box(gray_box, black_box):
-    return black_box
+def merge_box(gray_box, black_box, gray_scores, black_scores):
+    return gray_box, gray_scores
 

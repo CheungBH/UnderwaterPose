@@ -37,14 +37,14 @@ class ImgProcessor:
 
     def process_img(self, frame, black_img):
 
-        img_black = cv2.imread('video/black.jpg')
+        img_black = cv2.imread('Video/black.jpg')
         img_black = cv2.resize(img_black, config.frame_size)
         with torch.no_grad():
             gray_img = gray3D(copy.deepcopy(frame))
-            orig_img, gray_boxes, scores = self.gray_detector.process(gray_img)
-            orig_img, black_boxes, scores = self.black_detector.process(black_img)
+            orig_img, gray_boxes, gray_scores = self.gray_detector.process(gray_img)
+            orig_img, black_boxes, black_scores = self.black_detector.process(black_img)
 
-            boxes = merge_box(gray_boxes, black_boxes)
+            boxes, scores = merge_box(gray_boxes, black_boxes, gray_scores, black_scores)
             inps, orig_img, boxes, scores, pt1, pt2 = crop_bbox(frame, boxes, scores)
 
             if boxes is not None:
