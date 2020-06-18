@@ -52,8 +52,13 @@ class ImgProcessor:
 
                 if config.plot_bbox:
                     frame = self.BBV.visualize(boxes, frame)
-                    cv2.imshow("gray", self.BBV.visualize(gray_boxes, gray_img))
-                    cv2.imshow("black", self.BBV.visualize(black_boxes, black_img))
+                    if gray_boxes is not None:
+                        gray_img = self.BBV.visualize(gray_boxes, gray_img)
+                    cv2.imshow("gray", gray_img)
+
+                    if black_boxes is not None:
+                        black_img = self.BBV.visualize(black_boxes, black_img)
+                    cv2.imshow("black", black_img)
 
                 if key_points is not []:
                     id2ske, id2bbox, id2score = self.object_tracker.track(boxes, key_points, kps_scores)
