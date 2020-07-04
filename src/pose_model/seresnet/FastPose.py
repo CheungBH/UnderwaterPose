@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from .layers.SE_Resnet import SEResnet
-from estimator.pose_model.duc.DUC import DUC
+from ..duc.DUC import DUC
 from config.config import pose_cls, device
 from config import config
 
@@ -51,14 +51,13 @@ def createModel(cfg=None):
 
 
 class InferenNet_fast(nn.Module):
-    def __init__(self, kernel_size, dataset, cfg=None):
+    def __init__(self, kernel_size, dataset, weight, cfg=None):
         super(InferenNet_fast, self).__init__()
         if device != "cpu":
             model = createModel(cfg=cfg).cuda()
         else:
             model = createModel(cfg=cfg)
-        print('Loading pose model from {}'.format(config.pose_weight))
-        model.load_state_dict(torch.load(config.pose_weight, map_location=device))
+        model.load_state_dict(torch.load(weight, map_location=device))
 
         model.eval()
         self.pyranet = model

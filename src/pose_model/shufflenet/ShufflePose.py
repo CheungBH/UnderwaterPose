@@ -1,21 +1,20 @@
 
 import torch.nn as nn
-from estimator.pose_model.duc.DUC import DUC
-from estimator.pose_model.mobilenet.mobilenet import MobileNetV2
+from ..duc.DUC import DUC
+from .shufflenet import shufflenet_v2_x1_0
 from config.config import pose_cls, DUCs
 
 n_classes = pose_cls
 
 
 def createModel(cfg=None):
-    return MobilePose(cfg)
+    return ShufflePose(cfg)
 
 
-class MobilePose(nn.Module):
+class ShufflePose(nn.Module):
     def __init__(self, setting):
-        super(MobilePose, self).__init__()
-        # print(setting)
-        self.mobile = MobileNetV2(inverted_residual_setting=setting)
+        super(ShufflePose, self).__init__()
+        self.shuffle = shufflenet_v2_x1_0()
 
         self.suffle1 = nn.PixelShuffle(2)
         self.duc1 = DUC(320, DUCs[0], upscale_factor=2)
@@ -26,7 +25,7 @@ class MobilePose(nn.Module):
             int(DUCs[1]/4), n_classes, kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
-        out = self.mobile(x)
+        out = self.shuffle(x)
         out = self.suffle1(out)
         out = self.duc1(out)
         out = self.duc2(out)
