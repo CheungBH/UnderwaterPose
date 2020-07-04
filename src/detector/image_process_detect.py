@@ -1,26 +1,27 @@
-from utils.utils import cut_image
+from ..utils.img import cut_image
 import cv2
 import numpy as np
 import torch
-from SPPE.src.utils.img import cropBox, im_to_torch
-from config import config
+from .box_postprocess import cropBox, im_to_torch
+try:
+    from config.config import water_top
+except:
+    from src.debug.config.cfg_only_detections import water_top
 
 
 class ImageProcessDetection:
     def __init__(self):
-        self.water_top = 105
-        self.bg = cv2.imread("Video/img/origin.jpg")
+        self.water_top = water_top
         self.rect = []
         self.frame = []
+        self.enhanced = []
 
-    def __detect_people(self, frame):
-        self.frame = frame
-        frame = cv2.resize(frame, (self.bg.shape[1], self.bg.shape[0]))
-        diff = cv2.absdiff(frame, self.bg)
+    def __detect_people(self, diff):
         cut_diff = cut_image(diff, top=self.water_top)
         blur = cv2.blur(cut_diff, (7, 7))
         enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
         imageEnhance = cv2.filter2D(blur, -1, enhance_kernel)
+        self.enhanced = imageEnhance
         hsv = cv2.cvtColor(imageEnhance, cv2.COLOR_BGR2HSV)
         lower = np.array([0, 0, 46])
         upper = np.array([180, 255, 255])
@@ -33,8 +34,12 @@ class ImageProcessDetection:
         self.rect = []
         for c in real_con:
             x, y, w, h = cv2.boundingRect(c)
-            cv2.rectangle(frame, (x, y + self.water_top), (x + w, y + self.water_top + h), (0, 255, 0), 2)
+            # cv2.rectangle(self.frame, (x, y + self.water_top), (x + w, y + self.water_top + h), (0, 255, 0), 2)
             self.rect.append([x, y + self.water_top, x + w, y + self.water_top + h, 0.999, 0.999, 0])
+
+    def detect_rect(self, diff):
+        self.__detect_people(diff)
+        return self.rect
 
     @staticmethod
     def __crop_from_dets(img, boxes, inps, pt1, pt2):
@@ -52,7 +57,6 @@ class ImageProcessDetection:
             width = bottomRight[0] - upLeft[0]
 
             scaleRate = 0.3
-
             upLeft[0] = max(0, upLeft[0] - width * scaleRate / 2)
             upLeft[1] = max(0, upLeft[1] - ht * scaleRate / 2)
             bottomRight[0] = max(

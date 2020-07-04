@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 
-from human_detection import ImgProcessor
+from src.human_detection import ImgProcessor
 import cv2
 from config.config import video_path, frame_size
 import numpy as np
@@ -32,7 +32,8 @@ class DrownDetector:
                 background = self.fgbg.getBackgroundImage()
                 diff = cv2.absdiff(frame, background)
                 enhanced = cv2.filter2D(diff, -1, enhance_kernel)
-                kps, img, black_img, boxes, kps_score = IP.process_img(frame, enhanced)
+                kps, boxes, kps_score = IP.process_img(frame, enhanced)
+                img, black_img = IP.visualize()
                 cv2.imshow("res", img)
                 cv2.imshow("res_black", black_img)
                 cv2.waitKey(1)
