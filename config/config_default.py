@@ -8,10 +8,10 @@ rgb_yolo_weights = ""
 pose_weight = "../../weights/sppe/duc_se.pth"
 pose_cfg = None
 
-video_path = "video/underwater/45_Trim.mp4"
+video_path = "video/45_Trim.mp4"
 
 '''
----------------------------------------------------------------
+--------------------------------------------------------------------------------------------
 '''
 
 device = "cuda:0"

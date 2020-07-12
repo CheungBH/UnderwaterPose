@@ -3,9 +3,6 @@ import cv2
 import copy
 import numpy as np
 from config import config
-
-from config.config import gray_yolo_cfg, gray_yolo_weights, black_yolo_cfg, black_yolo_weights, \
-    video_path, pose_cfg, pose_weight
 from src.estimator.pose_estimator import PoseEstimator
 from src.estimator.visualize import KeyPointVisualizer
 from src.detector.yolo_detect import ObjectDetectionYolo
@@ -15,6 +12,13 @@ from src.tracker.visualize import IDVisualizer
 from src.utils.utils import process_kp
 from src.utils.img import torch_to_im, gray3D
 from src.detector.box_postprocess import crop_bbox, merge_box
+
+try:
+    from config.config import gray_yolo_cfg, gray_yolo_weights, black_yolo_cfg, black_yolo_weights, \
+        video_path, pose_cfg, pose_weight
+except:
+    from src.debug.config.cfg_multi_detections import gray_yolo_cfg, gray_yolo_weights, black_yolo_cfg, \
+        black_yolo_weights, video_path, pose_cfg, pose_weight
 
 tensor = torch.FloatTensor
 
@@ -85,7 +89,7 @@ class ImgProcessor:
             if self.boxes is not None:
                 # self.id2bbox = self.boxes
                 inps, pt1, pt2 = crop_bbox(frame, self.boxes)
-                self.kps, self.kps_score = self.pose_estimator.process_img(inps, self.boxes, self.boxes_scores, pt1,
+                self.kps, self.kps_score, _ = self.pose_estimator.process_img(inps, self.boxes, self.boxes_scores, pt1,
                                                                            pt2)
 
                 if self.kps is not []:
@@ -94,3 +98,40 @@ class ImgProcessor:
                     self.id2bbox = self.object_tracker.track_box(self.boxes)
 
         return id2ske, self.id2bbox, id2kpscore
+
+
+IP = ImgProcessor()
+enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
+frame_size = (540, 360)
+
+
+class DrownDetector:
+    def __init__(self, vp):
+        self.cap = cv2.VideoCapture(vp)
+        self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
+        self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+    def process_video(self):
+        cnt = 0
+        while True:
+            ret, frame = self.cap.read()
+            frame = cv2.resize(frame, frame_size)
+            cnt += 1
+            if ret:
+                fgmask = self.fgbg.apply(frame)
+                background = self.fgbg.getBackgroundImage()
+                diff = cv2.absdiff(frame, background)
+                enhanced = cv2.filter2D(diff, -1, enhance_kernel)
+                kps, boxes, kps_score = IP.process_img(frame, enhanced)
+                img, black_img = IP.visualize()
+                cv2.imshow("res", img)
+                cv2.imshow("res_black", black_img)
+                cv2.waitKey(1)
+            else:
+                self.cap.release()
+                break
+
+
+if __name__ == '__main__':
+    DrownDetector(video_path).process_video()
+
