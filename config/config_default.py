@@ -1,3 +1,19 @@
+gray_yolo_cfg = "model/gray/prune_0.93_keep_0.1.cfg"
+gray_yolo_weights = "model/gray/best.weights"
+black_yolo_cfg = "model/black/yolov3-spp-1cls.cfg"
+black_yolo_weights = "model/black/best_converted.weights"
+rgb_yolo_cfg = ""
+rgb_yolo_weights = ""
+
+pose_weight = "../../weights/sppe/duc_se.pth"
+pose_cfg = None
+
+video_path = "video/underwater/45_Trim.mp4"
+
+'''
+---------------------------------------------------------------
+'''
+
 device = "cuda:0"
 
 # For yolo
@@ -6,10 +22,6 @@ num_classes = 80
 nms_thresh = 0.33
 input_size = 416
 
-black_yolo_cfg = "yolo/cfg/yolov3-spp-1cls.cfg"
-black_yolo_weights = 'weights/yolo/black/freeze.weights'
-gray_yolo_cfg = "yolo/cfg/prune_0.93_keep_0.1.cfg"
-gray_yolo_weights = 'weights/yolo/gray/best.weights'
 
 # For pose estimation
 input_height = 320
@@ -20,8 +32,6 @@ fast_inference = True
 pose_batch = 80
 
 pose_backbone = "seresnet101"
-pose_weight = "weights/sppe/duc_se.pth"
-pose_cfg = None
 pose_cls = 17
 
 DUCs = [480, 240]
@@ -32,8 +42,7 @@ track_plot_id = ["all"]   # If all idx, track_plot_id = ["all"]
 assert track_idx == "all" or isinstance(track_idx, int)
 
 # For detection
-video_path = "Video/45_Trim2.mp4"
-frame_size = (540, 360)
+frame_size = (720, 540)
 
 plot_bbox = True
 plot_kps = True
