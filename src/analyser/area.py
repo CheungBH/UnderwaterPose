@@ -112,11 +112,11 @@ class RegionProcessor:
         self.trigger_alarm(fr)
 
         res = self.visualize(boxes, fr)
-        #cv2.imshow("result", res)
+        cv2.imshow("result", res)
         if self.if_write:
             self.out.write(res)
 
-        return res, self.alarm_ls, self.REGIONS
+        return self.alarm_ls, self.REGIONS
 
     def draw_alarm_signal(self, img):
         cv2.putText(img, "HELP!!!", (360, 270), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 3)

@@ -45,6 +45,7 @@ class ImgProcessor:
         self.center_point = []
         self.boxesforpose = []
         self.boxepose = []
+        self.item = 0
 
     def init_sort(self):
         self.object_tracker.init_tracker()
@@ -78,18 +79,23 @@ class ImgProcessor:
                 self.center_point.append(center)
 
     def isInside(self, points, bbox, region):
-        for center in points:
-            for item in bbox:
-                if region[center].center[0] <= item[2].item() or region[center].center[0] >= item[0].item() or region[center].center[1] <= item[3].item()\
-                        or region[center].center[1] >= item[1].item():
+        for item in bbox:
+            for center in points:
+                if region[center].center[0] <= item[2].item() and region[center].center[0] >= item[0].item() and region[center].center[1] <= item[3].item()\
+                        and region[center].center[1] >= item[1].item():
                     item = item.unsqueeze(dim=0)
+                    # if ([b for b in self.boxepose]== item) == False:
+                    #if False in ([b for b in self.boxepose] == item):
                     self.boxepose.append(item)
                     self.boxesforpose = torch.cat(self.boxepose,dim=0)
+                    break
+
 
 
     def process_img(self, frame, black_img):
         self.clear_res()
         self.frame = frame
+
 
         with torch.no_grad():
             gray_img = gray3D(copy.deepcopy(frame))
@@ -110,10 +116,10 @@ class ImgProcessor:
             if gray_results is not None:
                 self.id2bbox = self.object_tracker.track(gray_results)
                 boxes = self.object_tracker.id_and_box(self.id2bbox)
-                res, self.alarm_ls, REGIONS = self.RP.process_box(boxes, copy.deepcopy(frame))
+                self.alarm_ls, REGIONS = self.RP.process_box(boxes, copy.deepcopy(frame))
                 if self.alarm_ls:
-                    self.isInside(self.alarm_ls, boxes,REGIONS)
-                    if len(boxes)>0:
+                    self.isInside(self.alarm_ls, boxes, REGIONS)
+                    if len(self.boxesforpose)>0:
                         inps, pt1, pt2 = crop_bbox(frame, self.boxesforpose)
                         if inps is not None:
                             kps, kps_score, kps_id = self.pose_estimator.process_img(inps, self.boxesforpose, pt1, pt2)
@@ -121,4 +127,4 @@ class ImgProcessor:
                 self.center_point = []
                 self.boxesforpose = []
                 self.boxepose = []
-        return self.kps, self.id2bbox, self.kps_score, res
+        return self.kps, self.id2bbox, self.kps_score
