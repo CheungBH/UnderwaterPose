@@ -49,7 +49,7 @@ weights
 */*.pth
 */*.onnx
 SPPE
-Video
+video
 img
 __pycache__
 model.txt

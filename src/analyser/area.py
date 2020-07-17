@@ -93,6 +93,7 @@ class RegionProcessor:
         for idx, region in self.REGIONS.items():
             if region.if_warning():
                 self.alarm_ls.append(idx)
+
         if self.alarm_ls:
             self.draw_alarm_signal(img)
             self.draw_warning_mask(img)
@@ -114,7 +115,8 @@ class RegionProcessor:
         cv2.imshow("result", res)
         if self.if_write:
             self.out.write(res)
-        return res
+
+        return self.alarm_ls, self.REGIONS
 
     def draw_alarm_signal(self, img):
         cv2.putText(img, "HELP!!!", (360, 270), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 3)
