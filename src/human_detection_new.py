@@ -55,11 +55,17 @@ class ImgProcessor:
         self.boxes_scores = tensor([])
         self.frame = np.array([])
         self.id2bbox = {}
-        self.kps = {}
         self.kps_score = {}
+        self.center_point = []
+        self.boxesforpose = []
+        self.boxepose = []
+        self.kps = {}
 
-    def visualize(self):
-        img_black = cv2.imread('video/black.jpg')
+    def visualize(self,kps,kps_score,frame):
+        self.kps = kps
+        self.kps_score = kps_score
+        self.frame = frame
+        img_black = cv2.imread('../video/black.jpg')
         if config.plot_bbox and self.boxes is not None:
             self.frame = self.BBV.visualize(self.boxes, self.frame)
             # cv2.imshow("cropped", (torch_to_im(inps[0]) * 255))
@@ -69,6 +75,7 @@ class ImgProcessor:
         if config.plot_id and self.id2bbox is not None:
             self.frame = self.IDV.plot_bbox_id(self.id2bbox, self.frame)
             self.frame = self.IDV.plot_skeleton_id(self.kps, self.frame)
+
         return self.frame, img_black
 
     def get_centerpoint(self,region):
@@ -78,23 +85,22 @@ class ImgProcessor:
             if center not in self.center_point:
                 self.center_point.append(center)
 
+
     def isInside(self, points, bbox, region):
         for item in bbox:
             for center in points:
                 if region[center].center[0] <= item[2].item() and region[center].center[0] >= item[0].item() and region[center].center[1] <= item[3].item()\
                         and region[center].center[1] >= item[1].item():
                     item = item.unsqueeze(dim=0)
-                    # if ([b for b in self.boxepose]== item) == False:
-                    #if False in ([b for b in self.boxepose] == item):
                     self.boxepose.append(item)
                     self.boxesforpose = torch.cat(self.boxepose,dim=0)
                     break
 
 
-
     def process_img(self, frame, black_img):
         self.clear_res()
         self.frame = frame
+        res = cv2.resize(frame,(1440,540))
 
 
         with torch.no_grad():
@@ -116,7 +122,7 @@ class ImgProcessor:
             if gray_results is not None:
                 self.id2bbox = self.object_tracker.track(gray_results)
                 boxes = self.object_tracker.id_and_box(self.id2bbox)
-                self.alarm_ls, REGIONS = self.RP.process_box(boxes, copy.deepcopy(frame))
+                self.alarm_ls, REGIONS,res = self.RP.process_box(boxes, copy.deepcopy(frame))
                 if self.alarm_ls:
                     self.isInside(self.alarm_ls, boxes, REGIONS)
                     if len(self.boxesforpose)>0:
@@ -124,7 +130,5 @@ class ImgProcessor:
                         if inps is not None:
                             kps, kps_score, kps_id = self.pose_estimator.process_img(inps, self.boxesforpose, pt1, pt2)
                             self.kps, self.kps_score = self.object_tracker.match_kps(kps_id, kps, kps_score)
-                self.center_point = []
-                self.boxesforpose = []
-                self.boxepose = []
-        return self.kps, self.id2bbox, self.kps_score
+
+        return self.kps, self.id2bbox, self.kps_score,self.frame, res

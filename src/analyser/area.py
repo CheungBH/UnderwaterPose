@@ -112,14 +112,14 @@ class RegionProcessor:
         self.trigger_alarm(fr)
 
         res = self.visualize(boxes, fr)
-        cv2.imshow("result", res)
+        #cv2.imshow("result", res)
         if self.if_write:
             self.out.write(res)
 
-        return self.alarm_ls, self.REGIONS
+        return self.alarm_ls, self.REGIONS ,res
 
     def draw_alarm_signal(self, img):
-        cv2.putText(img, "HELP!!!", (360, 270), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 3)
+        cv2.putText(img, "Yellow Alarm!!!", (320, 270), cv2.FONT_HERSHEY_SIMPLEX, 2, (0,255,255), 2)
 
     def draw_cnt_map(self, img):
         for idx, region in self.REGIONS.items():
@@ -129,7 +129,7 @@ class RegionProcessor:
         print(self.alarm_ls)
         for idx in self.alarm_ls:
             region = self.REGIONS[idx]
-            img = cv2.rectangle(img, (region.left, region.top), (region.right, region.bottom), (0, 0, 255), -1)
+            img = cv2.rectangle(img, (region.left, region.top), (region.right, region.bottom), (0, 225, 225), -1)
 
     def visualize(self, boxes, img):
         im_black = cv2.imread("src/black.jpg")
