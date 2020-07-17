@@ -1,9 +1,11 @@
 #-*- coding: utf-8 -*-
 
-from src.human_detection import ImgProcessor
+from src.human_detection_new import ImgProcessor
 import cv2
 from config.config import video_path, frame_size
 import numpy as np
+from config import config
+from src.analyser.PoseAnalysis import Pose_Analysis
 
 body_parts = ["Nose", "Left eye", "Right eye", "Left ear", "Right ear", "Left shoulder", "Right shoulder", "Left elbow",
               "Right elbow", "Left wrist", "Right wrist", "Left hip", "Right hip", "Left knee", "Right knee",
@@ -20,6 +22,8 @@ class DrownDetector:
         self.cap = cv2.VideoCapture(video_path)
         self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
         self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.PA = Pose_Analysis(self.height, self.width)
+
 
     def process_video(self):
         cnt = 0
@@ -32,11 +36,16 @@ class DrownDetector:
                 background = self.fgbg.getBackgroundImage()
                 diff = cv2.absdiff(frame, background)
                 enhanced = cv2.filter2D(diff, -1, enhance_kernel)
-                kps, boxes, kps_score, res = IP.process_img(frame, enhanced)
-                img, black_img = IP.visualize()
-                cv2.imshow("res", img)
-                cv2.imshow("regiondetect", res)
-                #cv2.imshow("res_black", black_img)
+                kps, boxes, kps_score,fr, res = IP.process_img(frame, enhanced)
+                if kps:
+                    img, black_img = self.PA.Analysis(kps, kps_score,fr,res)
+                    final = self.PA.imageconcate(img, black_img,res)
+                    #cv2.imshow("res", final)
+                else:
+                    img, black_img = IP.visualize(kps, kps_score, fr)
+                    final = self.PA.imageconcate(img, black_img,res)
+                cv2.imshow("res", final)
+                    # cv2.imshow("res_black", black_img)
                 cv2.waitKey(1)
             else:
                 self.cap.release()
