@@ -122,13 +122,16 @@ class ImgProcessor:
             if gray_results is not None:
                 self.id2bbox = self.object_tracker.track(gray_results)
                 boxes = self.object_tracker.id_and_box(self.id2bbox)
-                self.alarm_ls, REGIONS,res = self.RP.process_box(boxes, copy.deepcopy(frame))
-                if self.alarm_ls:
-                    self.isInside(self.alarm_ls, boxes, REGIONS)
-                    if len(self.boxesforpose)>0:
-                        inps, pt1, pt2 = crop_bbox(frame, self.boxesforpose)
-                        if inps is not None:
-                            kps, kps_score, kps_id = self.pose_estimator.process_img(inps, self.boxesforpose, pt1, pt2)
-                            self.kps, self.kps_score = self.object_tracker.match_kps(kps_id, kps, kps_score)
+            else:
+                boxes = None
+
+            self.alarm_ls, REGIONS,res = self.RP.process_box(boxes, copy.deepcopy(frame))
+            if self.alarm_ls:
+                self.isInside(self.alarm_ls, boxes, REGIONS)
+                if len(self.boxesforpose)>0:
+                    inps, pt1, pt2 = crop_bbox(frame, self.boxesforpose)
+                    if inps is not None:
+                        kps, kps_score, kps_id = self.pose_estimator.process_img(inps, self.boxesforpose, pt1, pt2)
+                        self.kps, self.kps_score = self.object_tracker.match_kps(kps_id, kps, kps_score)
 
         return self.kps, self.id2bbox, self.kps_score,self.frame, res

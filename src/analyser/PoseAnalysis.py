@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from .keypoint import Keypoint
 from utils.kp_process import KPSProcessor
-from src.human_detection_new import ImgProcessor
+from src.human_detection import ImgProcessor
 from collections import defaultdict
 from src.classifymodel.TCN.test_TCN import TCNPredictor
 from config.config import classifymodel,classifyframe,cls
@@ -31,7 +31,6 @@ class Pose_Analysis:
         img, black_img = IP.visualize(kps,kps_score,frame)
         img = self.put_pred(img)
         return img, black_img
-
 
     def detect_kps(self):
         refresh_idx = []

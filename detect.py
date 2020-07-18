@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 
-from src.human_detection_new import ImgProcessor
+from src.human_detection import ImgProcessor
 import cv2
 from config.config import video_path, frame_size
 import numpy as np
