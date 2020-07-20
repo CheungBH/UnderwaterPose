@@ -2,7 +2,8 @@ import cv2
 import torch
 import numpy as np
 
-from config.config import track_plot_id
+# from config.config import track_plot_id
+track_plot_id = "all"
 
 
 class IDVisualizer(object):
@@ -10,7 +11,7 @@ class IDVisualizer(object):
         self.with_bbox = with_bbox
         self.boxid_color = (255, 255, 0)
         self.box_color = (0, 0, 255)
-        self.skeid_color = (0, 255, 255)
+        self.skeid_color = (255, 0, 255)
 
     def plot_bbox_id(self, id2bbox, img):
         for idx, box in id2bbox.items():

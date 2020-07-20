@@ -1,2 +1,5 @@
 2020.7.15
-Add the pose estimation after the region detection alarm trigger
+[carol]Add the pose estimation after the region detection alarm trigger
+[bh] (fixed) compatible with mobile pose
+2020.72.0
+[bh] (Added) Combine region detection, box analyser and RNN

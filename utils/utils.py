@@ -50,30 +50,60 @@ def cut_image(img, bottom=0, top=0, left=0, right=0):
     return np.asarray(img[top: height - bottom, left: width - right])
 
 
-def im_to_torch(img):
-    img = np.transpose(img, (2, 0, 1))  # C*H*W
-    img = to_torch(img).float()
-    if img.max() > 1:
-        img /= 255
-    return img
+def box2str(boxes):
+    string = ""
+    for box in boxes:
+        sub_str = ""
+        for coor in box:
+            sub_str += str(coor)
+            sub_str += " "
+        string += sub_str[:-1]
+        string += ","
+    return string[:-1]
 
 
-def to_torch(ndarray):
-    if type(ndarray).__module__ == 'numpy':
-        return torch.from_numpy(ndarray)
-    elif not torch.is_tensor(ndarray):
-        raise ValueError("Cannot convert {} to torch tensor"
-                         .format(type(ndarray)))
-    return ndarray
+def str2box(string):
+    if string == "":
+        return None
+    tmp = string.split(",")
+    boxes = []
+    for item in tmp:
+        boxes.append([float(i) for i in item.split(" ")])
+    return boxes
 
-def gray3D(img):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # cv2.imshow("gray", gray)
-    return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+def score2str(scores):
+    if isinstance(scores, float):
+        return str(scores)
+    string = ""
+    for s in scores:
+        string += str(s)
+        string += ","
+    return string[:-1]
+
+
+def str2score(string):
+    if string == "":
+        return None
+    return [float(item) for item in string.split(",")]
+
+
+def write_file(res, box_f, score_f):
+    (_, box, score) = res
+    if box is not None:
+        box_str = box2str(box.tolist())
+        score_str = score2str(score.squeeze().tolist())
+        box_f.write(box_str)
+        box_f.write("\n")
+        score_f.write(score_str)
+        score_f.write("\n")
+    else:
+        box_f.write("\n")
+        score_f.write("\n")
+
 
 if __name__ == '__main__':
     ut = Utils()
     # res = ut.time_to_string("10.0000")
     # print(res)
-    res = ut.get_angle([0, 0], [1, -1], [0, 1])
-    print(res)
+    _ = ut.get_angle([0, 0], [1, -1], [0, 1])
+    print(_)

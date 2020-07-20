@@ -18,10 +18,10 @@ class ObjectDetectionYolo(object):
         assert self.det_inp_dim > 32
         if device != "cpu":
             self.det_model.cuda()
-        inf_time = get_inference_time(self.det_model, height=config.input_size, width=config.input_size)
-        flops = print_model_param_flops(self.det_model, input_width=config.input_size, input_height=config.input_size)
-        params = print_model_param_nums(self.det_model)
-        print("Detection: Inference time {}s, Params {}, FLOPs {}".format(inf_time, params, flops))
+        # inf_time = get_inference_time(self.det_model, height=config.input_size, width=config.input_size)
+        # flops = print_model_param_flops(self.det_model, input_width=config.input_size, input_height=config.input_size)
+        # params = print_model_param_nums(self.det_model)
+        # print("Detection: Inference time {}s, Params {}, FLOPs {}".format(inf_time, params, flops))
         self.det_model.eval()
 
         self.im_dim_list = []

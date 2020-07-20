@@ -1,56 +1,84 @@
-#-*- coding: utf-8 -*-
-
-from src.human_detection import ImgProcessor
 import cv2
-from config.config import video_path, frame_size
-import numpy as np
 from config import config
-from src.analyser.PoseAnalysis import Pose_Analysis
+from src.human_detection import ImgProcessor
+import numpy as np
+from utils.utils import write_file
 
-body_parts = ["Nose", "Left eye", "Right eye", "Left ear", "Right ear", "Left shoulder", "Right shoulder", "Left elbow",
-              "Right elbow", "Left wrist", "Right wrist", "Left hip", "Right hip", "Left knee", "Right knee",
-              "Left ankle", "Right ankle"]
-body_dict = {name: idx for idx, name in enumerate(body_parts)}
+write_box = False
+write_video = True
 
-IP = ImgProcessor()
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
+frame_size = config.frame_size
+store_size = config.store_size
 
 
-class DrownDetector:
-    def __init__(self, video_path):
-        self.cap = cv2.VideoCapture(video_path)
+class DrownDetector(object):
+    def __init__(self, path):
+        self.path = path
+        self.cap = cv2.VideoCapture(path)
         self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
-        self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.PA = Pose_Analysis(self.height, self.width)
+        self.IP = ImgProcessor()
+        if write_box:
+            self.black_file = open("video/txt/black/{}.txt".format(path.split("/")[-1][:-4]), "w")
+            self.gray_file = open("video/txt/gray/{}.txt".format(path.split("/")[-1][:-4]), "w")
+            self.black_score_file = open("video/txt/black_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
+            self.gray_score_file = open("video/txt/gray_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
 
+        if write_video:
+            self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 15, store_size)
 
-    def process_video(self):
+    def process(self):
+        self.IP.object_tracker.init_tracker()
         cnt = 0
+        # fourcc = cv2.VideoWriter_fourcc(*'XVID')
         while True:
             ret, frame = self.cap.read()
-            frame = cv2.resize(frame, frame_size)
-            cnt += 1
             if ret:
+                frame = cv2.resize(frame, config.frame_size)
                 fgmask = self.fgbg.apply(frame)
                 background = self.fgbg.getBackgroundImage()
-                diff = cv2.absdiff(frame, background)
-                enhanced = cv2.filter2D(diff, -1, enhance_kernel)
-                kps, boxes, kps_score,fr, res = IP.process_img(frame, enhanced)
-                if kps:
-                    img, black_img = self.PA.Analysis(kps, kps_score,fr,res)
-                    final = self.PA.imageconcate(img, black_img,res)
-                    #cv2.imshow("res", final)
-                else:
-                    img, black_img = IP.visualize(kps, kps_score, fr)
-                    final = self.PA.imageconcate(img, black_img,res)
-                cv2.imshow("res", final)
-                    # cv2.imshow("res_black", black_img)
+
+                gray_res, black_res, dip_res, res_map = self.IP.process_img(frame, background)
+
+                if write_box:
+                    write_file(gray_res, self.gray_file, self.gray_score_file)
+                    write_file(black_res, self.black_file, self.black_score_file)
+
+                if write_video:
+                    self.out_video.write(res_map)
+
+                cv2.imshow("res", cv2.resize(res_map, (1440, 840)))
+                # out.write(res)
+                cnt += 1
                 cv2.waitKey(1)
             else:
                 self.cap.release()
+                self.out_video.release()
+                cv2.destroyAllWindows()
+                # self.IP.RP.out.release()
                 break
 
 
 if __name__ == '__main__':
-    DrownDetector(video_path).process_video()
+    # for path in os.listdir(config.video_path):
+    #     for name in os.listdir(config.video_path+'/'+path):
+    #         aa = config.video_path+'/'+path+'/'+name
+    #         print(aa)
+    DD = DrownDetector(config.video_path)
+    DD.process()
+
+    import shutil
+    import os
+    # src = "video/619_Big Group"
+    # for folder in os.listdir(src):
+    # video_folder = os.path.join(src, folder)
+    # video_folder = "D:/0619_BIG"
+    # dest_folder = video_folder + "_res"
+    # os.makedirs(dest_folder, exist_ok=True)
+    #
+    # for v_name in os.listdir(video_folder):
+    #     video = os.path.join(video_folder, v_name)
+    #     DD = RegionDetector(video)
+    #     DD.process()
+    #
+    #     # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
+    #     shutil.move("output.mp4", os.path.join(dest_folder, v_name))

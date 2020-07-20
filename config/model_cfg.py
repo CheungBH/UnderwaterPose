@@ -1,4 +1,3 @@
-# TCN structure
 TCN_structure = {1:[[6, 6, 6, 6], 5, 2],
                  # [channel_size, kernel_size, dilation]
                  2: [[3, 4, 5, 6], 5, 4],
@@ -9,5 +8,3 @@ TCN_structure = {1:[[6, 6, 6, 6], 5, 2],
                  7: [[6, 6, 6, 6], 7, 8],
                  8: [[6, 6, 6, 6], 7, 1]
                  }
-
-test_kps_num = 34

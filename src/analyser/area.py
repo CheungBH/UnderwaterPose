@@ -47,6 +47,11 @@ class RegionProcessor:
         br = self.locate(pt_br)
         return [(i, j) for i in range(tl[0], br[0]+1) for j in range(tl[1], br[1]+1)]
 
+    def region_range(self, pt_tl, pt_br):
+        tl = self.locate(pt_tl)
+        br = self.locate(pt_br)
+        return (tl[0], br[0]), (tl[1], br[1])
+
     def region_classify(self, boxes):
         center_region, cover_region, occupy_region = [], [], []
         for box in boxes:
@@ -62,31 +67,6 @@ class RegionProcessor:
             if occupy_range:
                 occupy_region += occupy_range
         return center_region, cover_region, occupy_region
-    #
-    # def center_region(self, boxes):
-    #     center_region = []
-    #     for box in boxes:
-    #         center = cal_center_point(box)
-    #         center_region.append(self.locate(center))
-    #     return center_region
-    #
-    # def cover_region(self, boxes):
-    #     cover_region = []
-    #     for box in boxes:
-    #         tl, br = (box[0], box[1]), (box[2], box[3])
-    #         cover_range = self.locate_cover(tl, br)
-    #         if cover_range:
-    #             cover_region += cover_range
-    #     return cover_region
-    #
-    # def occupy_region(self, boxes):
-    #     occupy_region = []
-    #     for box in boxes:
-    #         tl, br = (box[0], box[1]), (box[2], box[3])
-    #         occupy_range = self.locate_occupy(tl, br)
-    #         if occupy_range:
-    #             occupy_region += occupy_range
-    #     return occupy_region
 
     def region_process(self, occupy, cover, center):
         for idx in self.REGIONS.keys():
@@ -117,9 +97,6 @@ class RegionProcessor:
         self.clear()
         self.img = copy.deepcopy(fr)
         if boxes is not None:
-            # occupy_ls = self.occupy_region(boxes)
-            # cover_ls = self.cover_region(boxes)
-            # center_ls = self.center_region(boxes)
             center_ls, cover_ls, occupy_ls = self.region_classify(boxes)
             self.region_process(occupy_ls, cover_ls, center_ls)
         else:
@@ -131,20 +108,31 @@ class RegionProcessor:
         # cv2.imshow("result", res)
         if self.if_write:
             self.out.write(res)
-        return self.alarm_ls, self.REGIONS, res
+        return res
+
+    def get_alarmed_box_id(self, id2bbox):
+        warning_ls = []
+        if self.alarm_ls:
+            for idx, box in id2bbox.items():
+                tl, br = (box[0], box[1]), (box[2], box[3])
+                w_range, h_range = self.region_range(tl, br)
+                for center in self.alarm_ls:
+                    if w_range[1] >= center[0] >= w_range[0] and h_range[1] >= center[1] >= h_range[0]:
+                        warning_ls.append(idx)
+        return warning_ls
 
     def draw_alarm_signal(self, img):
-        cv2.putText(img, "HELP!!!", (360, 270), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 3)
+        cv2.putText(img, "Somewhere abnormal!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 2)
 
     def draw_cnt_map(self, img):
         for idx, region in self.REGIONS.items():
             cv2.putText(img, str(region.exists), region.center, cv2.FONT_HERSHEY_SIMPLEX, 0.8, region.cnt_color(), 1)
 
     def draw_warning_mask(self, img):
-        print(self.alarm_ls)
+        # print(self.alarm_ls)
         for idx in self.alarm_ls:
             region = self.REGIONS[idx]
-            img = cv2.rectangle(img, (region.left, region.top), (region.right, region.bottom), (0, 0, 255), -1)
+            img = cv2.rectangle(img, (region.left, region.top), (region.right, region.bottom), (0, 255, 255), -1)
 
     def visualize(self, boxes, img):
         im_black = cv2.imread("src/black.jpg")
