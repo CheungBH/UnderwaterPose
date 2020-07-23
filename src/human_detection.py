@@ -101,8 +101,10 @@ class ImgProcessor:
             box_map = self.HP.vis_box_size(img_black)
 
             if danger_idx:
-                danger_box = [v.numpy() for k, v in self.id2bbox.items() if k in danger_idx]
-                danger_box = torch.FloatTensor(danger_box)
+                # danger_box = [v.numpy() for k, v in self.id2bbox.items() if k in danger_idx]
+                # danger_box = torch.FloatTensor(danger_box)
+                danger_id2box = {k:v for k,v in self.id2bbox.items() if k in danger_idx}
+                danger_box = self.object_tracker.id_and_box(danger_id2box)
                 inps, pt1, pt2 = crop_bbox(rgb_kps, danger_box)
                 if inps is not None:
                     kps, kps_score, kps_id = self.pose_estimator.process_img(inps, danger_box, pt1, pt2)
