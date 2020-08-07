@@ -49,3 +49,16 @@ store_size = (frame_size[0]*3, frame_size[1]*3)
 black_box_threshold = 0.3
 gray_box_threshold = 0.2
 
+import os
+pose_option = os.path.join("/".join(pose_weight.replace("\\", "/").split("/")[:-1]), "option.pkl")
+if os.path.exists(pose_option):
+    info = torch.load(pose_option)
+    pose_backbone = info.backbone
+    pose_cfg = info.struct
+    pose_cls = info.kps
+    DUC_idx = info.DUC
+
+    output_height = info.outputResH
+    output_width = info.outputResW
+    input_height = info.inputResH
+    input_width = info.inputResW
