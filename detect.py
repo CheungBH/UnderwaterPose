@@ -52,7 +52,8 @@ class DrownDetector(object):
                 cv2.waitKey(1)
             else:
                 self.cap.release()
-                self.out_video.release()
+                if write_video:
+                    self.out_video.release()
                 cv2.destroyAllWindows()
                 # self.IP.RP.out.release()
                 break
