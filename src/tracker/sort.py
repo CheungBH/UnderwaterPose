@@ -23,11 +23,11 @@ from skimage import io
 from sklearn.utils.linear_assignment_ import linear_assignment
 import time
 import argparse
-
 import warnings
 
 warnings.filterwarnings('ignore')
 from filterpy.kalman import KalmanFilter
+
 
 def iou(bb_test,bb_gt):
   """
@@ -43,6 +43,7 @@ def iou(bb_test,bb_gt):
   o = wh / ((bb_test[2]-bb_test[0])*(bb_test[3]-bb_test[1]) + (bb_gt[2]-bb_gt[0])*(bb_gt[3]-bb_gt[1]) - wh)
   return(o)
 
+
 def convert_bbox_to_z(bbox):
   """
   Takes a bounding box in the form [x1,y1,x2,y2] and returns z in the form
@@ -56,6 +57,7 @@ def convert_bbox_to_z(bbox):
   s = w*h    #scale is just area
   r = w/float(h)
   return np.array([x,y,s,r]).reshape((4,1))
+
 
 def obtain_id(c_ids):
   begin = -1
@@ -75,6 +77,11 @@ def convert_x_to_bbox(x,score=None):
     return np.array([x[0]-w/2.,x[1]-h/2.,x[0]+w/2.,x[1]+h/2.]).reshape((1,4))
   else:
     return np.array([x[0]-w/2.,x[1]-h/2.,x[0]+w/2.,x[1]+h/2.,score]).reshape((1,5))
+
+#
+# def matrix2str(matrix, interval=10):
+#   str_ls = []
+#   for line in matrix:
 
 
 class KalmanBoxTracker(object):
@@ -140,44 +147,8 @@ class KalmanBoxTracker(object):
     """
     return convert_x_to_bbox(self.kf.x)
 
-def associate_detections_to_trackers(detections,trackers,iou_threshold = 0.3):
-  """
-  Assigns detections to tracked object (both represented as bounding boxes)
 
-  Returns 3 lists of matches, unmatched_detections and unmatched_trackers
-  """
-  if(len(trackers)==0):
-    return np.empty((0,2),dtype=int), np.arange(len(detections)), np.empty((0,5),dtype=int)
-  iou_matrix = np.zeros((len(detections),len(trackers)),dtype=np.float32)
-
-  for d,det in enumerate(detections):
-    for t,trk in enumerate(trackers):
-      iou_matrix[d,t] = iou(det,trk)
-  matched_indices = linear_assignment(-iou_matrix)
-
-  unmatched_detections = []
-  for d,det in enumerate(detections):
-    if(d not in matched_indices[:,0]):
-      unmatched_detections.append(d)
-  unmatched_trackers = []
-  for t,trk in enumerate(trackers):
-    if(t not in matched_indices[:,1]):
-      unmatched_trackers.append(t)
-
-  #filter out matched with low IOU
-  matches = []
-  for m in matched_indices:
-    if(iou_matrix[m[0],m[1]]<iou_threshold):
-      unmatched_detections.append(m[0])
-      unmatched_trackers.append(m[1])
-    else:
-      matches.append(m.reshape(1,2))
-  if(len(matches)==0):
-    matches = np.empty((0,2),dtype=int)
-  else:
-    matches = np.concatenate(matches,axis=0)
-
-  return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
+# Sort begins
 
 
 class Sort(object):
@@ -189,10 +160,61 @@ class Sort(object):
     self.min_hits = min_hits
     self.trackers = []
     self.frame_count = 0
+    self.iou_matrix = [[]]
 
   def init_KF(self):
     KalmanBoxTracker.count = 0
     KalmanBoxTracker.curr_id = []
+
+  def draw_iou_mat(self, interval=10):
+    if not self.iou_matrix:
+      return []
+    matrix = ["trks\dets".rjust(interval, " ")]
+    dets_ls = [str(idx+1).rjust(interval, " ") for idx in range(len(self.iou_matrix[0]))]
+    matrix += dets_ls
+    for idx, item in enumerate(self.iou_matrix):
+      trks_ls = [str(idx).rjust(interval, " ")]
+      trks_ls += [str(round(tmp, 4)).rjust(interval, " ") for tmp in item]
+      matrix.append(trks_ls)
+    return matrix
+
+  def associate_detections_to_trackers(self,detections, trackers, iou_threshold=0.3):
+    """
+    Assigns detections to tracked object (both represented as bounding boxes)
+
+    Returns 3 lists of matches, unmatched_detections and unmatched_trackers
+    """
+    if (len(trackers) == 0):
+      return np.empty((0, 2), dtype=int), np.arange(len(detections)), np.empty((0, 5), dtype=int)
+    self.iou_matrix = np.zeros((len(detections), len(trackers)), dtype=np.float32)
+
+    for d, det in enumerate(detections):
+      for t, trk in enumerate(trackers):
+        self.iou_matrix[d, t] = iou(det, trk)
+    self.match_indices = linear_assignment(-self.iou_matrix)
+
+    unmatched_detections = []
+    for d, det in enumerate(detections):
+      if (d not in self.match_indices[:, 0]):
+        unmatched_detections.append(d)
+    unmatched_trackers = []
+    for t, trk in enumerate(trackers):
+      if (t not in self.match_indices[:, 1]):
+        unmatched_trackers.append(t)
+
+    # filter out matched with low IOU
+    matches = []
+    for m in self.match_indices:
+      if (self.iou_matrix[m[0], m[1]] < iou_threshold):
+        unmatched_detections.append(m[0])
+        unmatched_trackers.append(m[1])
+      else:
+        matches.append(m.reshape(1, 2))
+    if (len(matches) == 0):
+      matches = np.empty((0, 2), dtype=int)
+    else:
+      matches = np.concatenate(matches, axis=0)
+    return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
 
   def update(self,dets):
     """
@@ -216,7 +238,8 @@ class Sort(object):
     trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
     for t in reversed(to_del):
       self.trackers.pop(t)
-    matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets,trks)
+    matched, unmatched_dets, unmatched_trks = self.associate_detections_to_trackers(dets,trks)
+    self.draw_iou_mat()
 
     #update matched trackers with assigned detections
     for t,trk in enumerate(self.trackers):
@@ -243,7 +266,8 @@ class Sort(object):
     if(len(ret)>0):
       return np.concatenate(ret)
     return np.empty((0,5))
-    
+
+
 def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='SORT demo')
