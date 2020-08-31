@@ -46,9 +46,6 @@ def cal_center_point(box):
 
 
 def paste_box(frame, black, boxes):
-    if boxes is None:
-        return black
-
     for box in boxes:
         x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
         x1 = 0 if x1 < 0 else x1

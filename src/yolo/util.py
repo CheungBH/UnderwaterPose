@@ -9,9 +9,9 @@ import numpy as np
 import cv2 
 import matplotlib.pyplot as plt
 try:
-    from bbox import bbox_iou
-except ImportError:
     from .bbox import bbox_iou
+except ImportError:
+    from yolo.bbox import bbox_iou
 
 
 def count_parameters(model):
@@ -149,7 +149,7 @@ def write_results(prediction, confidence, num_classes, nms=True, nms_conf=0.4):
         image_pred = torch.cat(seq, 1)
 
         #Get rid of the zero entries
-        non_zero_ind = (torch.nonzero(image_pred[:,4]))
+        non_zero_ind =  (torch.nonzero(image_pred[:,4]))
 
         image_pred_ = image_pred[non_zero_ind.squeeze(),:].view(-1,7)
 
@@ -196,7 +196,7 @@ def write_results(prediction, confidence, num_classes, nms=True, nms_conf=0.4):
 
             #Concatenate the batch_id of the image to the detection
             #this helps us identify which image does the detection correspond to 
-            #We use a linear structure to hold ALL the detections from the batch
+            #We use a linear straucture to hold ALL the detections from the batch
             #the batch_dim is flattened
             #batch is identified by extra batch column
 

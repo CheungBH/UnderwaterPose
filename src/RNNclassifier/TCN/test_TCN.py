@@ -1,11 +1,16 @@
 import torch
 import sys
-sys.path.append("../../")
 from .TCNsrc.model import TCN
 import numpy as np
 from config import config
 from config.model_cfg import TCN_structure
 import os
+try:
+    from config.config import pose_cls
+except:
+    from src.debug.config.cfg_multi_detections import pose_cls
+sys.path.append("../../")
+
 
 device = config.device
 TCN_params = TCN_structure
@@ -36,9 +41,7 @@ class TCNPredictor:
     def predict(self, data):
         input = self.get_input_data(data)
         output = self.model(input)
-        #print('output:',output)
         # pred = output.data.max(1, keepdim=True)[1]
-        #print('pred:',pred)
         return output
 
 

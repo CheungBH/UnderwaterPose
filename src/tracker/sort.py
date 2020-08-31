@@ -17,11 +17,8 @@
 """
 from __future__ import print_function
 
-import os.path
 import numpy as np
-from skimage import io
 from sklearn.utils.linear_assignment_ import linear_assignment
-import time
 import argparse
 import warnings
 
@@ -41,7 +38,7 @@ def iou(bb_test,bb_gt):
   h = np.maximum(0., yy2 - yy1)
   wh = w * h
   o = wh / ((bb_test[2]-bb_test[0])*(bb_test[3]-bb_test[1]) + (bb_gt[2]-bb_gt[0])*(bb_gt[3]-bb_gt[1]) - wh)
-  return(o)
+  return o
 
 
 def convert_bbox_to_z(bbox):
@@ -60,11 +57,12 @@ def convert_bbox_to_z(bbox):
 
 
 def obtain_id(c_ids):
-  begin = -1
+  begin = 0
   while True:
     begin += 1
     if begin not in c_ids:
       return begin
+
 
 def convert_x_to_bbox(x,score=None):
   """
@@ -78,17 +76,11 @@ def convert_x_to_bbox(x,score=None):
   else:
     return np.array([x[0]-w/2.,x[1]-h/2.,x[0]+w/2.,x[1]+h/2.,score]).reshape((1,5))
 
-#
-# def matrix2str(matrix, interval=10):
-#   str_ls = []
-#   for line in matrix:
-
 
 class KalmanBoxTracker(object):
   """
   This class represents the internel state of individual tracked objects observed as bbox.
   """
-  count = 0
   curr_id = []
   # print("Count is {}".format(count))
   def __init__(self,bbox):
@@ -97,19 +89,18 @@ class KalmanBoxTracker(object):
     """
     #define constant velocity model
     self.kf = KalmanFilter(dim_x=7, dim_z=4)
-    self.kf.F = np.array([[1,0,0,0,1,0,0],[0,1,0,0,0,1,0],[0,0,1,0,0,0,1],[0,0,0,1,0,0,0],  [0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[0,0,0,0,0,0,1]])
+    self.kf.F = np.array([[1,0,0,0,1,0,0], [0,1,0,0,0,1,0], [0,0,1,0,0,0,1], [0,0,0,1,0,0,0], [0,0,0,0,1,0,0],
+                          [0,0,0,0,0,1,0], [0,0,0,0,0,0,1]])
     self.kf.H = np.array([[1,0,0,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0]])
-
     self.kf.R[2:,2:] *= 10.
     self.kf.P[4:,4:] *= 1000. #give high uncertainty to the unobservable initial velocities
     self.kf.P *= 10.
     self.kf.Q[-1,-1] *= 0.01
     self.kf.Q[4:,4:] *= 0.01
-
     self.kf.x[:4] = convert_bbox_to_z(bbox)
+
     self.time_since_update = 0
     self.id = obtain_id(KalmanBoxTracker.curr_id)
-    KalmanBoxTracker.count += 1
     KalmanBoxTracker.curr_id.append(self.id)
     self.history = []
     self.hits = 0
@@ -147,12 +138,11 @@ class KalmanBoxTracker(object):
     """
     return convert_x_to_bbox(self.kf.x)
 
-
 # Sort begins
 
 
 class Sort(object):
-  def __init__(self,max_age=10, min_hits=8):
+  def __init__(self, max_age=10, min_hits=8):
     """
     Sets key parameters for SORT
     """
@@ -160,31 +150,36 @@ class Sort(object):
     self.min_hits = min_hits
     self.trackers = []
     self.frame_count = 0
-    self.iou_matrix = [[]]
+    self.iou_matrix = []
+    self.id2pred = {}
+    self.mat = [[]]
+    self.match_indices = []
+    self.tracker_pos = {}
 
   def init_KF(self):
     KalmanBoxTracker.count = 0
     KalmanBoxTracker.curr_id = []
 
-  def draw_iou_mat(self, interval=10):
-    if not self.iou_matrix:
-      return []
-    matrix = ["trks\dets".rjust(interval, " ")]
-    dets_ls = [str(idx+1).rjust(interval, " ") for idx in range(len(self.iou_matrix[0]))]
-    matrix += dets_ls
-    for idx, item in enumerate(self.iou_matrix):
-      trks_ls = [str(idx).rjust(interval, " ")]
-      trks_ls += [str(round(tmp, 4)).rjust(interval, " ") for tmp in item]
+  def draw_iou_mat(self, interval=8):
+    if len(self.iou_matrix) < 1:
+      return [["N/A"]]
+    iou = self.iou_matrix.T
+    matrix = [["t\d".rjust(interval, " ")]]
+    dets_ls = [str(idx).rjust(interval, " ") for idx in range(len(iou[0]))]
+    matrix[0] += dets_ls
+    for idx, item in enumerate(iou):
+      trks_ls = [str(self.tracker_pos[idx]).rjust(interval, " ")]
+      trks_ls += [str(round(tmp, 2)).rjust(interval, " ") for tmp in item]
       matrix.append(trks_ls)
+    # mat_str = [ls2str(item) for item in matrix]
     return matrix
 
   def associate_detections_to_trackers(self,detections, trackers, iou_threshold=0.3):
     """
     Assigns detections to tracked object (both represented as bounding boxes)
-
     Returns 3 lists of matches, unmatched_detections and unmatched_trackers
     """
-    if (len(trackers) == 0):
+    if len(trackers) == 0:
       return np.empty((0, 2), dtype=int), np.arange(len(detections)), np.empty((0, 5), dtype=int)
     self.iou_matrix = np.zeros((len(detections), len(trackers)), dtype=np.float32)
 
@@ -216,7 +211,7 @@ class Sort(object):
       matches = np.concatenate(matches, axis=0)
     return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
 
-  def update(self,dets):
+  def update(self, dets):
     """
     Params:
       dets - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
@@ -227,25 +222,30 @@ class Sort(object):
     """
     self.frame_count += 1
     #get predicted locations from existing trackers.
+    self.id2pred = {}
+    self.tracker_pos = {}
     trks = np.zeros((len(self.trackers),5))
     to_del = []
     ret = []
-    for t,trk in enumerate(trks):
-      pos = self.trackers[t].predict()[0]
-      trk[:] = [pos[0], pos[1], pos[2], pos[3], 0]
-      if(np.any(np.isnan(pos))):
-        to_del.append(t)
+    for t, trk in enumerate(trks):
+        pos = self.trackers[t].predict()[0]
+        idx = self.trackers[t].id
+        self.id2pred[idx] = pos
+        self.tracker_pos[t] = idx
+        trk[:] = [pos[0], pos[1], pos[2], pos[3], 0]
+        if np.any(np.isnan(pos)):
+            to_del.append(t)
     trks = np.ma.compress_rows(np.ma.masked_invalid(trks))
     for t in reversed(to_del):
-      self.trackers.pop(t)
-    matched, unmatched_dets, unmatched_trks = self.associate_detections_to_trackers(dets,trks)
-    self.draw_iou_mat()
+        self.trackers.pop(t)
+    matched, unmatched_dets, unmatched_trks = self.associate_detections_to_trackers(dets, trks)
+    self.mat = self.draw_iou_mat()
 
     #update matched trackers with assigned detections
     for t,trk in enumerate(self.trackers):
-      if(t not in unmatched_trks):
-        d = matched[np.where(matched[:,1]==t)[0],0]
-        trk.update(dets[d,:][0])
+        if t not in unmatched_trks:
+            d = matched[np.where(matched[:,1]==t)[0],0]
+            trk.update(dets[d,:][0])
 
     #create and initialise new trackers for unmatched detections
     for i in unmatched_dets:
@@ -254,18 +254,19 @@ class Sort(object):
     i = len(self.trackers)
     for trk in reversed(self.trackers):
         d = trk.get_state()[0]
-        if((trk.time_since_update < 1) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits)):
-          ret.append(np.concatenate((d,[trk.id+1], [trk.objclass])).reshape(1,-1)) # +1 as MOT benchmark requires positive
+        if ((trk.time_since_update < 1) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits)):
+            ret.append(np.concatenate((d,[trk.id], [trk.objclass])).reshape(1,-1)) # +1 as MOT benchmark requires positive
         i -= 1
         #remove dead tracklet
-        if(trk.time_since_update > self.max_age):
-          self.trackers.pop(i)
+        if trk.time_since_update > self.max_age or \
+                (trk.age < self.min_hits * 0.5 and trk.time_since_update > 0.3 * self.max_age):
+            self.trackers.pop(i)
 
     KalmanBoxTracker.curr_id = [trks.id for trks in self.trackers]
 
-    if(len(ret)>0):
-      return np.concatenate(ret)
-    return np.empty((0,5))
+    if len(ret) > 0:
+        return np.concatenate(ret)
+    return np.empty((0, 5))
 
 
 def parse_args():
