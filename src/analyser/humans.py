@@ -25,6 +25,17 @@ class HumanProcessor:
         self.RD_box_warning = []
         self.KPS_idx = []
 
+    def init(self, width, height):
+        self.stored_id = []
+        self.PEOPLE = {}
+        self.curr_id = []
+        self.untracked_id = []
+        self.curr_box_res = {}
+        self.RD_warning = []
+        self.RD_box_warning = []
+        self.KPS_idx = []
+        self.KPSP = KPSProcessor(height, width)
+
     def update_box(self, id2box):
         self.clear()
         for k, v in id2box.items():

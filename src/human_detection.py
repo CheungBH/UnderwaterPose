@@ -51,6 +51,12 @@ class ImgProcessor:
         self.kps = {}
         self.kps_score = {}
 
+    def init(self):
+        self.RP = RegionProcessor(config.frame_size[0], config.frame_size[1], 10, 10)
+        self.HP = HumanProcessor(config.frame_size[0], config.frame_size[1])
+        self.object_tracker = ObjectTracker()
+        self.object_tracker.init_tracker()
+
     def process_img(self, frame, background):
         rgb_kps, dip_img, track_pred, rd_box = \
             copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame)

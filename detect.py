@@ -23,10 +23,11 @@ class DrownDetector(object):
             self.gray_score_file = open("video/txt/gray_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
 
         if write_video:
-            self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 15, store_size)
+            self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 10, store_size)
 
     def process(self):
-        IP.object_tracker.init_tracker()
+        IP.init()
+        # IP.object_tracker.init_tracker()
         cnt = 0
         # fourcc = cv2.VideoWriter_fourcc(*'XVID')
         while True:
@@ -63,22 +64,22 @@ if __name__ == '__main__':
     #     for name in os.listdir(config.video_path+'/'+path):
     #         aa = config.video_path+'/'+path+'/'+name
     #         print(aa)
-    DD = DrownDetector(config.video_path)
-    DD.process()
+    # DD = DrownDetector(config.video_path)
+    # DD.process()
 
-    # import shutil
-    # import os
-    # # src = "video/619_Big Group"
-    # # for folder in os.listdir(src):
-    # # video_folder = os.path.join(src, folder)
-    # video_folder = "D:/0619_all_new_name"
-    # dest_folder = video_folder + "_10frame_res"
-    # os.makedirs(dest_folder, exist_ok=True)
-    #
-    # for v_name in os.listdir(video_folder):
-    #     video = os.path.join(video_folder, v_name)
-    #     DD = DrownDetector(video)
-    #     DD.process()
-    #
-    #     # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
-    #     shutil.move("output.mp4", os.path.join(dest_folder, v_name))
+    import shutil
+    import os
+    # src = "video/619_Big Group"
+    # for folder in os.listdir(src):
+    # video_folder = os.path.join(src, folder)
+    video_folder = "D:/0619_all_new_name"
+    dest_folder = video_folder + "_10frame_res_0915"
+    os.makedirs(dest_folder, exist_ok=True)
+
+    for v_name in os.listdir(video_folder):
+        video = os.path.join(video_folder, v_name)
+        DD = DrownDetector(video)
+        DD.process()
+
+        # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
+        shutil.move("output.mp4", os.path.join(dest_folder, v_name))

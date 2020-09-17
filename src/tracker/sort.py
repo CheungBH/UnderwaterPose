@@ -159,6 +159,12 @@ class Sort(object):
   def init_KF(self):
     KalmanBoxTracker.count = 0
     KalmanBoxTracker.curr_id = []
+    self.trackers = []
+    self.tracker_pos = {}
+    self.iou_matrix = []
+    self.id2pred = {}
+    self.mat = [[]]
+    self.frame_count = 0
 
   def draw_iou_mat(self, interval=8):
     if len(self.iou_matrix) < 1:
