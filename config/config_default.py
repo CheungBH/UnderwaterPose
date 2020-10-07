@@ -1,16 +1,18 @@
+import torch
+
 device = "cuda:0"
 
-gray_yolo_cfg = "weights/yolo/0710/gray/yolov3-spp-1cls.cfg"
-gray_yolo_weights = "weights/yolo/0710/gray/135_608_best.weights"
-black_yolo_cfg = "weights/yolo/0710/black/yolov3-spp-1cls.cfg"
-black_yolo_weights = "weights/yolo/0710/black/150_416_best.weights"
+gray_yolo_cfg = "../../Documents/Pose_demo/src/debug/model/gray/1007/13/yolov3-spp-1cls-leaky.cfg"
+gray_yolo_weights = "../../Documents/Pose_demo/src/debug/model/gray/1007/13/best.weights"
+black_yolo_cfg = "../../Documents/Pose_demo/src/debug/model/black/1007/2/yolov3-original-1cls-leaky.cfg"
+black_yolo_weights = "../../Documents/Pose_demo/src/debug/model/black/1007/2/best.weights"
 rgb_yolo_cfg = ""
 rgb_yolo_weights = ""
 
 pose_weight = "weights/sppe/duc_se.pth"
 pose_cfg = None
 
-video_path = "video/test/vlc-record-2020-07-03-11h28m47s-1.avi-.mp4"
+video_path = "video/0622_1_Trim.mp4"
 water_top = 40
 
 RNN_frame_length = 4
@@ -44,10 +46,14 @@ DUCs = [480, 240]
 
 # For detection
 frame_size = (720, 540)
-store_size = (frame_size[0]*3, frame_size[1]*3)
+store_size = (frame_size[0]*4, frame_size[1]*3)
+resize_ratio = 0.5
+show_size = (1440, 840)
 
-black_box_threshold = 0.3
-gray_box_threshold = 0.2
+black_box_threshold = 0.7
+gray_box_threshold = 0.7
+
+libtorch = None
 
 import os
 pose_option = os.path.join("/".join(pose_weight.replace("\\", "/").split("/")[:-1]), "option.pkl")
