@@ -31,7 +31,7 @@ empty_tensor4 = torch.empty([0,4])
 
 
 class ImgProcessor:
-    def __init__(self, show_img=True):
+    def __init__(self, resize_size, show_img=True):
         self.black_yolo = ObjectDetectionYolo(cfg=black_yolo_cfg, weight=black_yolo_weights)
         self.gray_yolo = ObjectDetectionYolo(cfg=gray_yolo_cfg, weight=gray_yolo_weights)
         self.object_tracker = ObjectTracker()
@@ -45,27 +45,27 @@ class ImgProcessor:
         self.id2bbox = {}
         self.img_black = []
         self.show_img = show_img
-        self.RP = RegionProcessor(config.frame_size[0], config.frame_size[1], 10, 10)
-        self.HP = HumanProcessor(config.frame_size[0], config.frame_size[1])
+        self.RP = RegionProcessor(resize_size[0], resize_size[1], 10, 10)
+        self.HP = HumanProcessor(resize_size[0], resize_size[1])
         self.BE = BoxEnsemble()
         self.kps = {}
+        self.resize_size = resize_size
         self.kps_score = {}
 
     def init(self):
-        self.RP = RegionProcessor(config.frame_size[0], config.frame_size[1], 10, 10)
-        self.HP = HumanProcessor(config.frame_size[0], config.frame_size[1])
+        self.RP = RegionProcessor(self.resize_size[0], self.resize_size[1], 10, 10)
+        self.HP = HumanProcessor(self.resize_size[0], self.resize_size[1])
         self.object_tracker = ObjectTracker()
         self.object_tracker.init_tracker()
 
     def process_img(self, frame, background):
         rgb_kps, dip_img, track_pred, rd_box = \
             copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame)
-        img_black = cv2.imread("src/black.jpg")
-        img_black = cv2.resize(img_black, config.frame_size)
+        img_black = cv2.resize(cv2.imread("src/black.jpg"), self.resize_size)
         iou_img, black_kps, img_size_ls, img_box_ratio, rd_cnt = copy.deepcopy(img_black), \
             copy.deepcopy(img_black), copy.deepcopy(img_black), copy.deepcopy(img_black), copy.deepcopy(img_black)
 
-        black_boxes, black_scores, gray_boxes, gray_scores = empty_tensor, empty_tensor, empty_tensor, empty_tensor
+        [black_boxes, black_scores, gray_boxes, gray_scores] = [empty_tensor] * 4
         diff = cv2.absdiff(frame, background)
 
         dip_boxes = self.dip_detection.detect_rect(diff)
@@ -144,3 +144,4 @@ class ImgProcessor:
             res_map = np.concatenate((row_1st_map, row_2nd_map, row_3rd_map), axis=0)
 
         return gray_results, black_results, dip_results, res_map
+
