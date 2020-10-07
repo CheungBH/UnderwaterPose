@@ -5,7 +5,10 @@ from config import config
 from ..utils.model_info import *
 import torch
 from ..utils.eval import getPrediction
+import os
+import torch.nn as nn
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 class PoseEstimator(object):
     def __init__(self, pose_cfg, pose_weight):
@@ -17,13 +20,19 @@ class PoseEstimator(object):
             self.pose_model = createModel(4 * 1 + 1, pose_dataset, pose_weight, cfg=pose_cfg)
         elif config.pose_backbone == "mobilenet":
             from src.pose_model.mobilenet.MobilePose import createModel
+
             self.pose_model = createModel(cfg=config.pose_cfg)
+
             self.pose_model.load_state_dict(torch.load(pose_weight, map_location=device))
         else:
             raise ValueError("Not a backbone!")
         if config.device != "cpu":
-            self.pose_model.cuda()
+
+
+            self.pose_model = nn.DataParallel(self.pose_model).cuda()
             self.pose_model.eval()
+
+
         inf_time = get_inference_time(self.pose_model, height=config.input_height, width=config.input_width)
         flops = print_model_param_flops(self.pose_model)
         params = print_model_param_nums(self.pose_model)
