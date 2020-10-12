@@ -2,7 +2,7 @@ import cv2
 from config import config
 from src.human_detection import ImgProcessor
 from utils.utils import write_file
-
+import time
 write_box = False
 write_video = True
 
@@ -32,6 +32,7 @@ class DrownDetector(object):
         # fourcc = cv2.VideoWriter_fourcc(*'XVID')
         while True:
             ret, frame = self.cap.read()
+            start = time.time()
             if ret:
                 frame = cv2.resize(frame, config.frame_size)
                 fgmask = self.fgbg.apply(frame)
@@ -50,6 +51,8 @@ class DrownDetector(object):
                 # out.write(res)
                 cnt += 1
                 cv2.waitKey(1)
+                all_time = time.time()-start
+                print("time is:",all_time)
             else:
                 self.cap.release()
                 # if write_video:
