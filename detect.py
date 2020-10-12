@@ -6,8 +6,7 @@ from utils.utils import write_file
 write_box = False
 write_video = True
 
-frame_size = config.frame_size
-store_size = config.store_size
+store_ratio = config.store_ratio
 show_size = config.show_size
 resize_ratio = config.resize_ratio
 
@@ -17,8 +16,7 @@ class DrownDetector(object):
         self.cap = cv2.VideoCapture(path)
         self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
         self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        if write_video:
-            self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 15, store_size)
+
         self.resize_size = (int(self.width * resize_ratio), int(self.height * resize_ratio))
         self.IP = ImgProcessor(self.resize_size)
         if write_box:
@@ -28,7 +26,8 @@ class DrownDetector(object):
             self.gray_score_file = open("video/txt/gray_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
 
         if write_video:
-            self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 10, store_size)
+            self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 10,
+                                             (store_ratio[1]*self.height, store_ratio[0]*self.width))
 
     def process(self):
         self.IP.init()
@@ -70,22 +69,20 @@ if __name__ == '__main__':
     #     for name in os.listdir(config.video_path+'/'+path):
     #         aa = config.video_path+'/'+path+'/'+name
     #         print(aa)
-    DD = DrownDetector(config.video_path)
-    DD.process()
+    #DD = DrownDetector(config.video_path)
+    #DD.process()
 
-    # import shutil
-    # import os
-    # # src = "video/619_Big Group"
-    # # for folder in os.listdir(src):
-    # # video_folder = os.path.join(src, folder)
-    # # video_folder = "D:/0619_all_new_name"
-    # # dest_folder = video_folder + "_10frame_res_0915"
-    # os.makedirs(dest_folder, exist_ok=True)
-    #
-    # for v_name in os.listdir(video_folder):
-    #     video = os.path.join(video_folder, v_name)
-    #     DD = DrownDetector(video)
-    #     DD.process()
+    import shutil
+    import os
+
+    video_folder = "D:/0619_all_new_name"
+    dest_folder = video_folder + "_10frame_res_1010"
+    os.makedirs(dest_folder, exist_ok=True)
+
+    for v_name in os.listdir(video_folder):
+        video = os.path.join(video_folder, v_name)
+        DD = DrownDetector(video)
+        DD.process()
 
         # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
-        # shutil.move("output.mp4", os.path.join(dest_folder, v_name))
+        shutil.move("output.mp4", os.path.join(dest_folder, v_name))
