@@ -17,10 +17,12 @@ from src.analyser.area import RegionProcessor
 from src.analyser.humans import HumanProcessor
 from src.utils.utils import paste_box
 from src.RNNclassifier.classify import RNNInference
-
 try:
-    from config.config import gray_yolo_cfg, gray_yolo_weights, black_yolo_cfg, black_yolo_weights, video_path, \
+    from config.config import gray_yolo_cfg, gray_yolo_weights, video_path, \
         black_box_threshold, gray_box_threshold, pose_cfg, pose_weight
+# try:
+#     from config.config import gray_yolo_cfg, gray_yolo_weights, black_yolo_cfg, black_yolo_weights, video_path, \
+#         black_box_threshold, gray_box_threshold, pose_cfg, pose_weight
 except:
     from src.debug.config.cfg_multi_detections import gray_yolo_cfg, gray_yolo_weights, black_yolo_cfg,\
         black_yolo_weights, video_path, black_box_threshold, gray_box_threshold, pose_cfg, pose_weight
@@ -28,11 +30,11 @@ except:
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 empty_tensor = torch.empty([0,7])
 empty_tensor4 = torch.empty([0,4])
-
+torch.cuda.set_device(0)
 
 class ImgProcessor:
     def __init__(self, show_img=True):
-        self.black_yolo = ObjectDetectionYolo(cfg=black_yolo_cfg, weight=black_yolo_weights)
+        # self.black_yolo = ObjectDetectionYolo(cfg=black_yolo_cfg, weight=black_yolo_weights)
         self.gray_yolo = ObjectDetectionYolo(cfg=gray_yolo_cfg, weight=gray_yolo_weights)
         self.object_tracker = ObjectTracker()
         self.dip_detection = ImageProcessDetection()
@@ -73,15 +75,15 @@ class ImgProcessor:
 
         with torch.no_grad():
             # black picture
-            enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
-            enhanced = cv2.filter2D(diff, -1, enhance_kernel)
-            black_res = self.black_yolo.process(enhanced)
-            if black_res is not None:
-                black_boxes, black_scores = self.black_yolo.cut_box_score(black_res)
-                self.BBV.visualize(black_boxes, enhanced, black_scores)
-                black_boxes, black_scores, black_res = \
-                    filter_box(black_boxes, black_scores, black_res, black_box_threshold)
-            black_results = [enhanced, black_boxes, black_scores]
+            # enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
+            # enhanced = cv2.filter2D(diff, -1, enhance_kernel)
+            # black_res = self.black_yolo.process(enhanced)
+            # if black_res is not None:
+            #     black_boxes, black_scores = self.black_yolo.cut_box_score(black_res)
+            #     self.BBV.visualize(black_boxes, enhanced, black_scores)
+            #     black_boxes, black_scores, black_res = \
+            #         filter_box(black_boxes, black_scores, black_res, black_box_threshold)
+            # black_results = [enhanced, black_boxes, black_scores]
 
             # gray pics process
             gray_img = gray3D(frame)
@@ -93,7 +95,8 @@ class ImgProcessor:
                     filter_box(gray_boxes, gray_scores, gray_res, gray_box_threshold)
             gray_results = [gray_img, gray_boxes, gray_scores]
 
-            merged_res = self.BE.ensemble_box(black_res, gray_res)
+            # merged_res = self.BE.ensemble_box(black_res, gray_res)
+            merged_res = gray_res
 
             self.id2bbox = self.object_tracker.track(merged_res)
             self.id2bbox = eliminate_nan(self.id2bbox)
@@ -132,7 +135,7 @@ class ImgProcessor:
                                 self.HP.update_RNN(idx, RNN_res)
                                 self.RNN_model.vis_RNN_res(n, idx, self.HP.get_RNN_preds(idx), black_kps)
 
-            detection_map = np.concatenate((enhanced, gray_img), axis=1)
+            detection_map = np.concatenate((frame, gray_img), axis=1)
             tracking_map = np.concatenate((track_pred, iou_img), axis=1)
             row_1st_map = np.concatenate((detection_map, tracking_map), axis=1)
             box_map = np.concatenate((img_box_ratio, img_size_ls), axis=1)
@@ -143,4 +146,5 @@ class ImgProcessor:
             row_3rd_map = np.concatenate((kps_map, cache_map), axis=1)
             res_map = np.concatenate((row_1st_map, row_2nd_map, row_3rd_map), axis=0)
 
-        return gray_results, black_results, dip_results, res_map
+        # return gray_results, black_results, dip_results, res_map
+        return gray_results, dip_results, res_map

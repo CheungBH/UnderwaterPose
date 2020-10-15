@@ -8,7 +8,8 @@ from ..utils.eval import getPrediction
 import os
 import torch.nn as nn
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+torch.cuda.set_device(0)
 
 class PoseEstimator(object):
     def __init__(self, pose_cfg, pose_weight):
@@ -27,9 +28,8 @@ class PoseEstimator(object):
         else:
             raise ValueError("Not a backbone!")
         if config.device != "cpu":
-
-
-            self.pose_model = nn.DataParallel(self.pose_model).cuda()
+            # self.pose_model = nn.DataParallel(self.pose_model).cuda()
+            self.pose_model.cuda()
             self.pose_model.eval()
 
 

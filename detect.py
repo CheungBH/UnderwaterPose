@@ -38,11 +38,12 @@ class DrownDetector(object):
                 fgmask = self.fgbg.apply(frame)
                 background = self.fgbg.getBackgroundImage()
 
-                gray_res, black_res, dip_res, res_map = IP.process_img(frame, background)
+                # gray_res, black_res, dip_res, res_map = IP.process_img(frame, background)
+                gray_res, dip_res, res_map = IP.process_img(frame, background)
 
                 if write_box:
                     write_file(gray_res, self.gray_file, self.gray_score_file)
-                    write_file(black_res, self.black_file, self.black_score_file)
+                    # write_file(black_res, self.black_file, self.black_score_file)
 
                 # if write_video:
                 #     self.out_video.write(res_map)

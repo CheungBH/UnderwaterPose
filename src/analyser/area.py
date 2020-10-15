@@ -6,6 +6,7 @@ from src.utils.utils import cal_center_point
 from .area_vis import AreaVisualizer
 
 
+
 class RegionProcessor:
     def __init__(self, w, h, w_num, h_num):
         self.height, self.width = h, w
