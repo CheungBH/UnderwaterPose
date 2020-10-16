@@ -6,8 +6,8 @@ from src.yolo.darknet import Darknet
 from config.config import device, frame_size
 from src.utils.model_info import get_inference_time,print_model_param_flops,print_model_param_nums
 
-import os
-import torch.nn as nn
+# import os
+# import torch.nn as nn
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 torch.cuda.set_device(0)

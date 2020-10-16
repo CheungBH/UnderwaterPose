@@ -1,16 +1,27 @@
+import torch
+
 device = "cuda:0"
 
-gray_yolo_cfg = "weights/yolo/0710/gray/yolov3-spp-1cls.cfg"
-gray_yolo_weights = "weights/yolo/0710/gray/135_608_best.weights"
-black_yolo_cfg = "weights/yolo/0710/black/yolov3-spp-1cls.cfg"
-black_yolo_weights = "weights/yolo/0710/black/150_416_best.weights"
+
+research = False
+
+# gray_yolo_cfg = "weights/yolo/0710/gray/yolov3-spp-1cls.cfg"
+# gray_yolo_weights = "weights/yolo/0710/gray/135_608_best.weights"
+# black_yolo_cfg = "weights/yolo/0710/black/yolov3-spp-1cls.cfg"
+# black_yolo_weights = "weights/yolo/0710/black/150_416_best.weights"
+gray_yolo_cfg = "weights/yolo/small_gray/prune_0.96_keep_0.01_15_shortcut.cfg"
+gray_yolo_weights = "weights/yolo/small_gray/best.weights"
+# black_yolo_cfg = "weights/yolo/0710/black/yolov3-spp-1cls.cfg"
+# black_yolo_weights = "weights/yolo/0710/black/150_416_best.weights"
 rgb_yolo_cfg = ""
 rgb_yolo_weights = ""
 
 pose_weight = "weights/sppe/duc_se.pth"
 pose_cfg = None
 
-video_path = "video/test/vlc-record-2020-07-03-11h28m47s-1.avi-.mp4"
+video_path = 0#"rtsp://192.168.50.40:554/user=admin&password=Hkumb155&channel=1&stream=0.rsp"#-1
+
+# video_path = "video/0710/carol.mp4"
 water_top = 40
 
 RNN_frame_length = 4

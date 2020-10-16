@@ -1,6 +1,6 @@
 from .people import Person
 import cv2
-import numpy as np
+# import numpy as np
 from src.utils.kp_process import KPSProcessor
 from src.utils.plot import colors, sizes, thicks
 

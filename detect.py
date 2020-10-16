@@ -10,80 +10,126 @@ frame_size = config.frame_size
 store_size = config.store_size
 IP = ImgProcessor()
 
+from threading import Thread
+from queue import Queue
+
 
 class DrownDetector(object):
-    def __init__(self, path):
+    def __init__(self, path,queueSize=3000):
         self.path = path
         self.cap = cv2.VideoCapture(path)
+        self.stopped = False
+        # initialize the queue used to store frames read from
+        # the video file
+        self.Q = Queue(maxsize=queueSize)
         self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
-        if write_box:
-            self.black_file = open("video/txt/black/{}.txt".format(path.split("/")[-1][:-4]), "w")
-            self.gray_file = open("video/txt/gray/{}.txt".format(path.split("/")[-1][:-4]), "w")
-            self.black_score_file = open("video/txt/black_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
-            self.gray_score_file = open("video/txt/gray_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
+        # if write_box:
+        #     self.black_file = open("video/txt/black/{}.txt".format(path.split("/")[-1][:-4]), "w")
+        #     self.gray_file = open("video/txt/gray/{}.txt".format(path.split("/")[-1][:-4]), "w")
+        #     self.black_score_file = open("video/txt/black_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
+        #     self.gray_score_file = open("video/txt/gray_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
 
         # if write_video:
         #     self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 10, store_size)
 
-    def process(self):
+    def stop(self):
+        # indicate that the thread should be stopped
+        self.stopped = True
+
+    def more(self):
+        # return True if there are still frames in the queue
+        return self.Q.qsize() > 0
+
+    def read(self):
+        # return next frame in the queue
+        return self.Q.get()
+
+    def update(self):
+        # keep looping infinitely
         IP.init()
         # IP.object_tracker.init_tracker()
         cnt = 0
-        # fourcc = cv2.VideoWriter_fourcc(*'XVID')
         while True:
-            ret, frame = self.cap.read()
-            start = time.time()
-            if ret:
-                frame = cv2.resize(frame, config.frame_size)
-                fgmask = self.fgbg.apply(frame)
-                background = self.fgbg.getBackgroundImage()
-
-                # gray_res, black_res, dip_res, res_map = IP.process_img(frame, background)
-                gray_res, dip_res, res_map = IP.process_img(frame, background)
-
-                if write_box:
-                    write_file(gray_res, self.gray_file, self.gray_score_file)
-                    # write_file(black_res, self.black_file, self.black_score_file)
-
-                # if write_video:
-                #     self.out_video.write(res_map)
-
-                cv2.imshow("res", cv2.resize(res_map, (1440, 840)))
-                # out.write(res)
-                cnt += 1
-                cv2.waitKey(1)
-                all_time = time.time()-start
-                print("time is:",all_time)
+            # if the thread indicator variable is set, stop the
+            # thread
+            if self.stopped:
+                return
+            # otherwise, ensure the queue has room in it
+            if not self.Q.full():
+                # read the next frame from the file
+                (grabbed, frame) = self.cap.read()
+                start = time.time()
+                if grabbed:
+                    frame = cv2.resize(frame, config.frame_size)
+                    fgmask = self.fgbg.apply(frame)
+                    background = self.fgbg.getBackgroundImage()
+                    gray_res, dip_res, res_map = IP.process_img(frame, background)
+                    # if write_video:
+                    #     self.out_video.write(res_map)
+                    cv2.imshow("res", cv2.resize(res_map, (1440, 840)))
+                    # out.write(res)
+                    cnt += 1
+                    cv2.waitKey(1)
+                    all_time = time.time() - start
+                    print("time is:", all_time)
+                # if the `grabbed` boolean is `False`, then we have
+                # reached the end of the video file
+                if not grabbed:
+                    self.stop()
+                    return
+                # add the frame to the queue
+                self.Q.put(frame)
             else:
-                self.cap.release()
-                # if write_video:
-                #     self.out_video.release()
-                cv2.destroyAllWindows()
-                # self.IP.RP.out.release()
-                break
+                self.Q.queue.clear()
+
+
+    def start(self):
+        # start a thread to read frames from the file video stream
+        t = Thread(target=self.update, args=())
+        t.daemon = True
+        t.start()
+        return self
+
+    # def process(self):
+    #     IP.init()
+    #     # IP.object_tracker.init_tracker()
+    #     cnt = 0
+    #     # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    #     while True:
+    #         ret, frame = self.cap.read()
+    #         start = time.time()
+    #         if ret:
+    #             frame = cv2.resize(frame, config.frame_size)
+    #             fgmask = self.fgbg.apply(frame)
+    #             background = self.fgbg.getBackgroundImage()
+    #
+    #             # gray_res, black_res, dip_res, res_map = IP.process_img(frame, background)
+    #             gray_res, dip_res, res_map = IP.process_img(frame, background)
+    #
+    #             if write_box:
+    #                 write_file(gray_res, self.gray_file, self.gray_score_file)
+    #                 # write_file(black_res, self.black_file, self.black_score_file)
+    #
+    #             # if write_video:
+    #             #     self.out_video.write(res_map)
+    #
+    #             cv2.imshow("res", cv2.resize(res_map, (1440, 840)))
+    #             # out.write(res)
+    #             cnt += 1
+    #             cv2.waitKey(1)
+    #             all_time = time.time()-start
+    #             print("time is:",all_time)
+    #         else:
+    #             self.cap.release()
+    #             # if write_video:
+    #             #     self.out_video.release()
+    #             cv2.destroyAllWindows()
+    #             # self.IP.RP.out.release()
+    #             break
 
 
 if __name__ == '__main__':
-    # for path in os.listdir(config.video_path):
-    #     for name in os.listdir(config.video_path+'/'+path):
-    #         aa = config.video_path+'/'+path+'/'+name
-    #         print(aa)
     DD = DrownDetector(config.video_path)
-    DD.process()
+    # DD.process()
+    DD.update()
 
-    # import shutil
-    # import os
-    # # src = "video/619_Big Group"
-    # # for folder in os.listdir(src):
-    # # video_folder = os.path.join(src, folder)
-    # video_folder = "D:/0619_all_new_name_10frame_res_0915"
-    # dest_folder = video_folder + "_10frame_res_0915"
-    # os.makedirs(dest_folder, exist_ok=True)
-    #
-    # for v_name in os.listdir(video_folder):
-    #     video = os.path.join(video_folder, v_name)
-    #     DD = DrownDetector(video)
-    #     DD.process()
-    #
-    #     # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
-    #     shutil.move("output.mp4", os.path.join(dest_folder, v_name))
