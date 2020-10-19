@@ -5,6 +5,7 @@ from src.yolo.util import dynamic_write_results
 from src.yolo.darknet import Darknet
 from config.config import device
 import numpy as np
+from src.utils.model_info import *
 
 empty_tensor = torch.empty([0,8])
 
@@ -20,10 +21,10 @@ class ObjectDetectionYolo(object):
         assert self.det_inp_dim > 32
         if device != "cpu":
             self.det_model.cuda()
-        # inf_time = get_inference_time(self.det_model, height=config.input_size, width=config.input_size)
-        # flops = print_model_param_flops(self.det_model, input_width=config.input_size, input_height=config.input_size)
-        # params = print_model_param_nums(self.det_model)
-        # print("Detection: Inference time {}s, Params {}, FLOPs {}".format(inf_time, params, flops))
+        inf_time = get_inference_time(self.det_model, height=config.input_size, width=config.input_size)
+        flops = print_model_param_flops(self.det_model, input_width=config.input_size, input_height=config.input_size)
+        params = print_model_param_nums(self.det_model)
+        print("Detection: Inference time {}s, Params {}, FLOPs {}".format(inf_time, params, flops))
         self.det_model.eval()
         # self.height, self.width = img_height, img_width
 
