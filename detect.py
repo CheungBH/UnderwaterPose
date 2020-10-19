@@ -61,6 +61,8 @@ class DrownDetector(object):
                 start = time.time()
                 if grabbed:
                     frame = cv2.resize(frame, config.frame_size)
+                    # add the frame to the queue
+                    self.Q.put(frame)
                     fgmask = self.fgbg.apply(frame)
                     background = self.fgbg.getBackgroundImage()
                     gray_res, dip_res, res_map = IP.process_img(frame, background)
@@ -77,8 +79,7 @@ class DrownDetector(object):
                 if not grabbed:
                     self.stop()
                     return
-                # add the frame to the queue
-                self.Q.put(frame)
+
             else:
                 self.Q.queue.clear()
 

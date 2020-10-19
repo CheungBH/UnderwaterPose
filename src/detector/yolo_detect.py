@@ -6,13 +6,8 @@ from src.yolo.darknet import Darknet
 from config.config import device, frame_size
 from src.utils.model_info import get_inference_time,print_model_param_flops,print_model_param_nums
 
-# import os
-# import torch.nn as nn
-
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 torch.cuda.set_device(0)
 empty_tensor = torch.empty([0,7])
-
 
 class ObjectDetectionYolo(object):
     def __init__(self, cfg, weight, batchSize=1, img_height=frame_size[1], img_width=frame_size[0]):

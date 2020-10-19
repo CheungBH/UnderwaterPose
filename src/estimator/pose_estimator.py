@@ -5,10 +5,7 @@ from config import config
 from ..utils.model_info import *
 import torch
 from ..utils.eval import getPrediction
-# import os
-# import torch.nn as nn
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 torch.cuda.set_device(0)
 
 class PoseEstimator(object):
