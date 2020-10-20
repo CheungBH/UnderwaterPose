@@ -6,7 +6,6 @@ from utils.utils import write_file
 write_box = False
 write_video = True
 
-frame_size = config.frame_size
 store_size = config.store_size
 show_size = config.show_size
 resize_ratio = config.resize_ratio
