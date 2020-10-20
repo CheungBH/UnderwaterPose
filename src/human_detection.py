@@ -17,6 +17,7 @@ from src.analyser.area import RegionProcessor
 from src.analyser.humans import HumanProcessor
 from src.utils.utils import paste_box
 from src.RNNclassifier.classify import RNNInference
+from src.CNNclassifier.classify import CNNInference
 
 try:
     from config.config import gray_yolo_cfg, gray_yolo_weights, black_yolo_cfg, black_yolo_weights, video_path, \
@@ -38,6 +39,7 @@ class ImgProcessor:
         self.dip_detection = ImageProcessDetection()
         self.RNN_model = RNNInference()
         self.pose_estimator = PoseEstimator(pose_cfg=pose_cfg, pose_weight=pose_weight)
+        self.CNN_model = CNNInference()
         self.KPV = KeyPointVisualizer()
         self.BBV = BBoxVisualizer()
         self.IDV = IDVisualizer()
@@ -59,8 +61,8 @@ class ImgProcessor:
         self.object_tracker.init_tracker()
 
     def process_img(self, frame, background):
-        rgb_kps, dip_img, track_pred, rd_box = \
-            copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame)
+        rgb_kps, dip_img, track_pred, rd_box, CNN_img = \
+            copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame)
         img_black = cv2.resize(cv2.imread("src/black.jpg"), self.resize_size)
         iou_img, black_kps, img_size_ls, img_box_ratio, rd_cnt = copy.deepcopy(img_black), \
             copy.deepcopy(img_black), copy.deepcopy(img_black), copy.deepcopy(img_black), copy.deepcopy(img_black)
@@ -113,6 +115,9 @@ class ImgProcessor:
 
             if danger_idx:
                 danger_id2box = {k:v for k,v in self.id2bbox.items() if k in danger_idx}
+                CNN_result = self.CNN_model.classify(CNN_img, danger_id2box)
+                self.CNN_model.visualize(CNN_img, CNN_result)
+
                 danger_box = self.object_tracker.id_and_box(danger_id2box)
                 inps, pt1, pt2 = crop_bbox(rgb_kps, danger_box)
                 if inps is not None:
@@ -139,8 +144,8 @@ class ImgProcessor:
             rd_map = np.concatenate((rd_cnt, rd_box), axis=1)
             row_2nd_map = np.concatenate((rd_map, box_map), axis=1)
             kps_map = np.concatenate((rgb_kps, black_kps), axis=1)
-            cache_map = np.concatenate((frame, img_black), axis=1)
-            row_3rd_map = np.concatenate((kps_map, cache_map), axis=1)
+            # cache_map = np.concatenate((CNN_img, img_black), axis=1)
+            row_3rd_map = np.concatenate((CNN_img, kps_map, img_black), axis=1)
             res_map = np.concatenate((row_1st_map, row_2nd_map, row_3rd_map), axis=0)
 
         return gray_results, black_results, dip_results, res_map
