@@ -6,9 +6,8 @@ import time
 write_box = False
 write_video = True
 
-frame_size = config.frame_size
+resize_ratio = config.resize_ratio
 store_size = config.store_size
-IP = ImgProcessor()
 
 from threading import Thread
 from queue import Queue
@@ -23,6 +22,9 @@ class DrownDetector(object):
         # the video file
         self.Q = Queue(maxsize=queueSize)
         self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
+        self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.resize_size = (int(self.width * resize_ratio), int(self.height * resize_ratio))
+        self.IP = ImgProcessor(self.resize_size)
         # if write_box:
         #     self.black_file = open("video/txt/black/{}.txt".format(path.split("/")[-1][:-4]), "w")
         #     self.gray_file = open("video/txt/gray/{}.txt".format(path.split("/")[-1][:-4]), "w")
@@ -46,7 +48,7 @@ class DrownDetector(object):
 
     def update(self):
         # keep looping infinitely
-        IP.init()
+        self.IP.init()
         # IP.object_tracker.init_tracker()
         cnt = 0
         while True:
@@ -60,10 +62,10 @@ class DrownDetector(object):
                 (grabbed, frame) = self.cap.read()
                 start = time.time()
                 if grabbed:
-                    frame = cv2.resize(frame, config.frame_size)
+                    frame = cv2.resize(frame, self.resize_size)
                     fgmask = self.fgbg.apply(frame)
                     background = self.fgbg.getBackgroundImage()
-                    gray_res, dip_res, res_map = IP.process_img(frame, background)
+                    gray_res, dip_res, res_map = self.IP.process_img(frame, background)
                     # if write_video:
                     #     self.out_video.write(res_map)
                     cv2.imshow("res", cv2.resize(res_map, (1440, 840)))

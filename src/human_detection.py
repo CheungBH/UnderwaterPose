@@ -26,7 +26,7 @@ empty_tensor = torch.empty([0,7])
 torch.cuda.set_device(0)
 
 class ImgProcessor:
-    def __init__(self, show_img=True):
+    def __init__(self, resize_size, show_img=True):
         self.gray_yolo = ObjectDetectionYolo(cfg=gray_yolo_cfg, weight=gray_yolo_weights)
         self.object_tracker = ObjectTracker()
         self.dip_detection = ImageProcessDetection()
@@ -39,25 +39,25 @@ class ImgProcessor:
         self.id2bbox = {}
         self.img_black = []
         self.show_img = show_img
-        self.RP = RegionProcessor(config.frame_size[0], config.frame_size[1], 10, 10)
-        self.HP = HumanProcessor(config.frame_size[0], config.frame_size[1])
-        self.BE = BoxEnsemble()
+        self.RP = RegionProcessor(resize_size[0], resize_size[1], 10, 10)
+        self.HP = HumanProcessor(resize_size[0], resize_size[1])
+        self.BE = BoxEnsemble(resize_size[0], resize_size[1])
         self.kps = {}
         self.kps_score = {}
+        self.resize_size = resize_size
         if config.research:
             self.black_yolo = ObjectDetectionYolo(cfg=black_yolo_cfg, weight=black_yolo_weights)
 
     def init(self):
-        self.RP = RegionProcessor(config.frame_size[0], config.frame_size[1], 10, 10)
-        self.HP = HumanProcessor(config.frame_size[0], config.frame_size[1])
+        self.RP = RegionProcessor(self.resize_size[0], self.resize_size[1], 10, 10)
+        self.HP = HumanProcessor(self.resize_size[0], self.resize_size[1])
         self.object_tracker = ObjectTracker()
         self.object_tracker.init_tracker()
 
     def process_img(self, frame, background):
         rgb_kps, dip_img, rd_box = \
             copy.deepcopy(frame), copy.deepcopy(frame), copy.deepcopy(frame)
-        img_black = cv2.imread("src/black.jpg")
-        img_black = cv2.resize(img_black, config.frame_size)
+        img_black = cv2.resize(cv2.imread("src/black.jpg"), self.resize_size)
         black_kps, img_box_ratio, rd_cnt = copy.deepcopy(img_black), \
             copy.deepcopy(img_black), copy.deepcopy(img_black)
 
