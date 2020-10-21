@@ -19,7 +19,7 @@ class DrownDetector(object):
     def __init__(self, path,queueSize=3000):
         self.path = path
         self.video = UMatFileVideoStream(self.path, 128).start()
-        self.rgb = cv2.UMat(self.height, self.width, cv2.CV_8UC3)
+        # self.rgb = cv2.UMat(self.height, self.width, cv2.CV_8UC3)
         # self.cap = cv2.VideoCapture(path)
         # self.stopped = False
         # # initialize the queue used to store frames read from
