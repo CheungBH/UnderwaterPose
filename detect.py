@@ -3,6 +3,7 @@ from config import config
 from src.human_detection import ImgProcessor
 from utils.utils import write_file
 import time
+from Umatvideostream import UMatFileVideoStream
 write_box = False
 write_video = True
 
@@ -11,15 +12,17 @@ store_size = config.store_size
 
 from threading import Thread
 from queue import Queue
-
+#https://github.com/Kjue/python-opencv-gpu-video
 
 class DrownDetector(object):
     def __init__(self, path,queueSize=3000):
         self.path = path
+        # self.video = UMatFileVideoStream(self.path, 128).start()
+        # self.rgb = cv2.UMat(self.height, self.width, cv2.CV_8UC3)
         self.cap = cv2.VideoCapture(path)
         self.stopped = False
-        # initialize the queue used to store frames read from
-        # the video file
+        # # initialize the queue used to store frames read from
+        # # the video file
         self.Q = Queue(maxsize=queueSize)
         self.fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=200, detectShadows=False)
         self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -68,7 +71,7 @@ class DrownDetector(object):
                     gray_res, dip_res, res_map = self.IP.process_img(frame, background)
                     # if write_video:
                     #     self.out_video.write(res_map)
-                    cv2.imshow("res", cv2.resize(res_map, (1440, 840)))
+                    cv2.imshow("res", cv2.resize(res_map, (1960, 1080)))
                     # out.write(res)
                     cnt += 1
                     cv2.waitKey(1)
@@ -84,13 +87,12 @@ class DrownDetector(object):
             else:
                 self.Q.queue.clear()
 
-
-    def start(self):
-        # start a thread to read frames from the file video stream
-        t = Thread(target=self.update, args=())
-        t.daemon = True
-        t.start()
-        return self
+    # def start(self):
+    #     # start a thread to read frames from the file video stream
+    #     t = Thread(target=self.update, args=())
+    #     t.daemon = True
+    #     t.start()
+    #     return self
 
     # def process(self):
     #     IP.init()
@@ -134,4 +136,5 @@ if __name__ == '__main__':
     DD = DrownDetector(config.video_path)
     # DD.process()
     DD.update()
+
 

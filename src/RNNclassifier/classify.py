@@ -7,7 +7,7 @@ from .TCN.test_TCN import TCNPredictor
 #     lstm = True
 # except:
 #     lstm = False
-
+from server_test import server
 import cv2
 import numpy as np
 from src.utils.plot import colors, sizes, thicks
@@ -17,6 +17,7 @@ try:
 except:
     from src.debug.config.cfg_multi_detections import RNN_backbone, RNN_class, RNN_weight
 
+S = server()
 
 class RNNInference:
     def __init__(self, model_path=RNN_weight):
@@ -59,5 +60,7 @@ class RNNInference:
 
     def vis_color(self, pred):
         if "drown" in pred:
+            S.connect()
             return colors["red"]
+
         return colors["silver"]

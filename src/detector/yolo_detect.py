@@ -6,8 +6,12 @@ from src.yolo.darknet import Darknet
 from config.config import device
 import numpy as np
 
-empty_tensor = torch.empty([0,8])
 
+empty_tensor = torch.empty([0,8])
+# =======
+# torch.cuda.set_device(0)
+# empty_tensor = torch.empty([0,7])
+# >>>>>>> carol
 
 class ObjectDetectionYolo(object):
     def __init__(self, cfg, weight, batchSize=1):
