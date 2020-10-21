@@ -7,6 +7,7 @@ import numpy as np
 from torch import nn
 from src.utils.utils import image_normalize
 import cv2
+from src.utils.plot import colors, sizes, thicks
 
 try:
     from config.config import CNN_backbone, CNN_class, CNN_weight
@@ -54,7 +55,7 @@ class CNNInference(object):
 
     def classify(self, fr, id2bbox):
         pred_res = {}
-        for idx, box in id2bbox:
+        for idx, box in id2bbox.items():
             x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
             x1 = 0 if x1 < 0 else x1
             y1 = 0 if y1 < 0 else y1
@@ -72,14 +73,16 @@ class CNNInference(object):
 
     def visualize(self, frame, predictions):
         for i, (location, (pred, idx, score)) in enumerate(predictions.items()):
-            cv2.putText(frame, "id{}: {}".format(idx, pred), location, cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 100, 255), 2)
+            cv2.putText(frame, "id{}: {}".format(idx, pred), location, cv2.FONT_HERSHEY_SIMPLEX, sizes["word"],
+                        colors["red"], thicks["word"])
             text = self.array2str(score)
-            cv2.putText(frame, text, (30, 30 + 20*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 100, 255), 2)
+            cv2.putText(frame, "id{}: {}".format(idx, text), (30, 30 + 20*i), cv2.FONT_HERSHEY_SIMPLEX, sizes["word"],
+                        colors["yellow"], thicks["word"])
 
     @staticmethod
     def array2str(array):
-        base = str(array[0])
+        base = str(np.round(array[0], 4))
         for item in array[1:]:
             base += ","
-            base += str(item)
+            base += str(np.round(item, 4))
         return base[:-1]
