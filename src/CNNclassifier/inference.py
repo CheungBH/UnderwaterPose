@@ -76,7 +76,7 @@ class CNNInference(object):
             cv2.putText(frame, "id{}: {}".format(idx, pred), location, cv2.FONT_HERSHEY_SIMPLEX, sizes["word"],
                         colors["red"], thicks["word"])
             text = self.array2str(score)
-            cv2.putText(frame, "id{}: {}".format(idx, text), (30, 30 + 20*i), cv2.FONT_HERSHEY_SIMPLEX, sizes["word"],
+            cv2.putText(frame, "id{}: {}".format(idx, text), (30, 30 + 40*i), cv2.FONT_HERSHEY_SIMPLEX, sizes["word"],
                         colors["yellow"], thicks["word"])
 
     @staticmethod
