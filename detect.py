@@ -68,20 +68,20 @@ if __name__ == '__main__':
     #     for name in os.listdir(config.video_path+'/'+path):
     #         aa = config.video_path+'/'+path+'/'+name
     #         print(aa)
-    DD = DrownDetector(config.video_path)
-    DD.process()
+    # DD = DrownDetector(config.video_path)
+    # DD.process()
 
-    # import shutil
-    # import os
-    #
-    # video_folder = "D:/0619_all_new_name"
-    # dest_folder = video_folder + "_10frame_res_1010"
-    # os.makedirs(dest_folder, exist_ok=True)
-    #
-    # for v_name in os.listdir(video_folder):
-    #     video = os.path.join(video_folder, v_name)
-    #     DD = DrownDetector(video)
-    #     DD.process()
-    #
-    #     # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
-    #     shutil.move("output.avi", os.path.join(dest_folder, v_name))
+    import shutil
+    import os
+
+    video_folder = "D:/0619_all_new_name"
+    dest_folder = video_folder + "_11frame_res_1021"
+    os.makedirs(dest_folder, exist_ok=True)
+
+    for v_name in os.listdir(video_folder):
+        video = os.path.join(video_folder, v_name)
+        DD = DrownDetector(video)
+        DD.process()
+
+        # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
+        shutil.move("output.avi", os.path.join(dest_folder, v_name))
