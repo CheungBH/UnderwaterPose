@@ -2,7 +2,7 @@ from .box import Box
 from .keypoint import Keypoint
 
 max_disappear = 10
-max_model_pred = 5
+max_model_pred = 8
 
 
 class Person:

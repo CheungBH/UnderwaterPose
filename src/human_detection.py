@@ -81,7 +81,6 @@ class ImgProcessor:
 
         gray_boxes, gray_scores = empty_tensor, empty_tensor
         diff = cv2.absdiff(frame, background)
-
         dip_boxes = self.dip_detection.detect_rect(diff)
         dip_results = [dip_img, dip_boxes]
 
@@ -91,9 +90,10 @@ class ImgProcessor:
             gray_res = self.gray_yolo.process(gray_img)
             if gray_res is not None:
                 gray_boxes, gray_scores = self.gray_yolo.cut_box_score(gray_res)
-                self.BBV.visualize(gray_boxes, gray_img, gray_scores)
                 gray_boxes, gray_scores, gray_res = \
                     filter_box(gray_boxes, gray_scores, gray_res, gray_box_threshold)
+                self.BBV.visualize(gray_boxes, gray_img, gray_scores)
+
             gray_results = [gray_img, gray_boxes, gray_scores]
             merged_res = gray_res
             self.id2bbox = self.object_tracker.track(merged_res)
@@ -107,7 +107,7 @@ class ImgProcessor:
 
             if danger_idx:
                 if self.signal == 0:
-                    self.S.connect(1)
+                    self.S.connect(1,1)
                     self.ser.write(serial.to_bytes(self.green_off))
                     self.ser.write(serial.to_bytes(self.red_off))
                     self.ser.write(serial.to_bytes(self.yellow_on))
@@ -135,7 +135,7 @@ class ImgProcessor:
                                         and len(self.HP.get_RNN_preds(idx)) == 5:
                                     self.ser.write(serial.to_bytes(self.yellow_off))
                                     self.ser.write(serial.to_bytes(self.red_on))
-                                    self.alrambox.append(danger_id2box.get(idx).tolist()[0]/black_kps.shape[1])
+                                    self.alrambox.append(danger_id2box.get(idx).tolist()[0] / black_kps.shape[1])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[1] / black_kps.shape[0])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[2] / black_kps.shape[1])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[3] / black_kps.shape[0])
@@ -145,7 +145,7 @@ class ImgProcessor:
                                 elif self.HP.get_RNN_preds(idx)[0] == 'stand' and len(set(self.HP.get_RNN_preds(idx))) == 1 \
                                         and len(self.HP.get_RNN_preds(idx)) == 5:
                                     self.signal = 0
-                                    # self.S.connect(0)
+                                    self.S.connect(0,0)
                                 self.RNN_model.vis_RNN_res(n, idx, self.HP.get_RNN_preds(idx), black_kps)
                                 self.alrambox = []
             else:
@@ -154,12 +154,12 @@ class ImgProcessor:
                 self.ser.write(serial.to_bytes(self.buzzer_off))
                 self.ser.write(serial.to_bytes(self.green_on))
                 self.signal = 0
-                # self.S.connect(0)
-
+                # self.S.connect(0,0)
 
             row_1st_map = np.concatenate((gray_img, rd_box), axis=1)
             row_2nd_map = np.concatenate((img_box_ratio, black_kps), axis=1)
             res_map = np.concatenate((row_1st_map, row_2nd_map), axis=0)
-
+            sent = cv2.resize(res_map, (320, 240))
+            self.S.connect(sent.data, 0)
 
         return gray_results, dip_results, res_map
