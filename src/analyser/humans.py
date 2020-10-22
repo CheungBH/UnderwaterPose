@@ -1,6 +1,6 @@
 from .people import Person
 import cv2
-# import numpy as np
+import numpy as np
 from src.utils.kp_process import KPSProcessor
 from src.utils.plot import colors, sizes, thicks
 
@@ -24,17 +24,6 @@ class HumanProcessor:
         self.RD_warning = []
         self.RD_box_warning = []
         self.KPS_idx = []
-
-    def init(self, width, height):
-        self.stored_id = []
-        self.PEOPLE = {}
-        self.curr_id = []
-        self.untracked_id = []
-        self.curr_box_res = {}
-        self.RD_warning = []
-        self.RD_box_warning = []
-        self.KPS_idx = []
-        self.KPSP = KPSProcessor(height, width)
 
     def update_box(self, id2box):
         self.clear()

@@ -9,6 +9,7 @@ write_video = True
 
 resize_ratio = config.resize_ratio
 store_size = config.store_size
+show_size = config.show_size
 
 from threading import Thread
 from queue import Queue
@@ -28,14 +29,6 @@ class DrownDetector(object):
         self.height, self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.resize_size = (int(self.width * resize_ratio), int(self.height * resize_ratio))
         self.IP = ImgProcessor(self.resize_size)
-        # if write_box:
-        #     self.black_file = open("video/txt/black/{}.txt".format(path.split("/")[-1][:-4]), "w")
-        #     self.gray_file = open("video/txt/gray/{}.txt".format(path.split("/")[-1][:-4]), "w")
-        #     self.black_score_file = open("video/txt/black_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
-        #     self.gray_score_file = open("video/txt/gray_score/{}.txt".format(path.split("/")[-1][:-4]), "w")
-
-        # if write_video:
-        #     self.out_video = cv2.VideoWriter("output.mp4", cv2.VideoWriter_fourcc(*'XVID'), 10, store_size)
 
     def stop(self):
         # indicate that the thread should be stopped
@@ -71,7 +64,7 @@ class DrownDetector(object):
                     gray_res, dip_res, res_map = self.IP.process_img(frame, background)
                     # if write_video:
                     #     self.out_video.write(res_map)
-                    cv2.imshow("res", cv2.resize(res_map, (1960, 1080)))
+                    cv2.imshow("res", cv2.resize(res_map, show_size))
                     # out.write(res)
                     cnt += 1
                     cv2.waitKey(1)

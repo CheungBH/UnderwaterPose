@@ -6,7 +6,6 @@ from src.utils.utils import cal_center_point
 from .area_vis import AreaVisualizer
 
 
-
 class RegionProcessor:
     def __init__(self, w, h, w_num, h_num):
         self.height, self.width = h, w
@@ -28,21 +27,6 @@ class RegionProcessor:
         self.update_ls = []
         self.empty_ls = []
         self.alarm_ls = []
-
-    def init(self, w, h, w_num, h_num):
-        self.height, self.width = h, w
-        self.height_num, self.width_num = h_num, w_num
-        self.region_cnt = h_num * w_num
-        self.h_interval, self.w_interval = int(h/h_num), int(w/w_num)
-        self.region_idx = [(i, j) for i in range(h_num) for j in range(w_num)]
-        self.REGIONS = {idx: Region(idx, self.h_interval, self.w_interval) for idx in self.region_idx}
-        self.Visualize = AreaVisualizer(w, h, w_num, h_num)
-
-        self.keep_ls = []
-        self.update_ls = []
-        self.empty_ls = []
-        self.alarm_ls = []
-        self.img = np.array([[[]]])
 
     def locate(self, pt):
         return math.floor(pt[0]/self.w_interval), math.floor(pt[1]/self.h_interval)

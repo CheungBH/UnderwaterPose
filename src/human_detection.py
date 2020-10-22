@@ -2,7 +2,10 @@ import torch
 import numpy as np
 import cv2
 import copy
-from config import config
+try:
+    import src.debug.config.cfg_multi_detections as config
+except:
+    import config.config as config
 from src.detector.yolo_detect import ObjectDetectionYolo
 from src.detector.image_process_detect import ImageProcessDetection
 # from src.detector.yolo_asff_detector import ObjectDetectionASFF
@@ -17,21 +20,19 @@ from src.analyser.area import RegionProcessor
 from src.analyser.humans import HumanProcessor
 from src.utils.utils import paste_box
 from src.RNNclassifier.classify import RNNInference
-from config.config import gray_yolo_cfg, gray_yolo_weights, gray_box_threshold, pose_cfg, pose_weight
-if config.research:
-    from config.config import black_yolo_cfg,black_yolo_weights,black_box_threshold
 
-empty_tensor = torch.empty([0,7])
+empty_tensor = torch.empty([0, 7])
 
 torch.cuda.set_device(0)
 
+
 class ImgProcessor:
     def __init__(self, resize_size, show_img=True):
-        self.gray_yolo = ObjectDetectionYolo(cfg=gray_yolo_cfg, weight=gray_yolo_weights)
+        self.gray_yolo = ObjectDetectionYolo(cfg=config.gray_yolo_cfg, weight=config.gray_yolo_weights)
         self.object_tracker = ObjectTracker()
         self.dip_detection = ImageProcessDetection()
         self.RNN_model = RNNInference()
-        self.pose_estimator = PoseEstimator(pose_cfg=pose_cfg, pose_weight=pose_weight)
+        self.pose_estimator = PoseEstimator(pose_cfg=config.pose_cfg, pose_weight=config.pose_weight)
         self.KPV = KeyPointVisualizer()
         self.BBV = BBoxVisualizer()
         self.IDV = IDVisualizer()
@@ -45,8 +46,6 @@ class ImgProcessor:
         self.kps = {}
         self.kps_score = {}
         self.resize_size = resize_size
-        if config.research:
-            self.black_yolo = ObjectDetectionYolo(cfg=black_yolo_cfg, weight=black_yolo_weights)
 
     def init(self):
         self.RP = RegionProcessor(self.resize_size[0], self.resize_size[1], 10, 10)
@@ -75,7 +74,7 @@ class ImgProcessor:
                 gray_boxes, gray_scores = self.gray_yolo.cut_box_score(gray_res)
                 self.BBV.visualize(gray_boxes, gray_img, gray_scores)
                 gray_boxes, gray_scores, gray_res = \
-                    filter_box(gray_boxes, gray_scores, gray_res, gray_box_threshold)
+                    filter_box(gray_boxes, gray_scores, gray_res, config.gray_box_threshold)
             gray_results = [gray_img, gray_boxes, gray_scores]
 
             merged_res = gray_res
@@ -114,42 +113,4 @@ class ImgProcessor:
             row_2nd_map = np.concatenate((img_box_ratio, black_kps), axis=1)
             res_map = np.concatenate((row_1st_map, row_2nd_map), axis=0)
 
-
-            # if config.research == True:
-            #     black_boxes, black_scores = empty_tensor, empty_tensor
-            #     # black picture
-            #     enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
-            #     enhanced = cv2.filter2D(diff, -1, enhance_kernel)
-            #     black_res = self.black_yolo.process(enhanced)
-            #     if black_res is not None:
-            #         black_boxes, black_scores = self.black_yolo.cut_box_score(black_res)
-            #         self.BBV.visualize(black_boxes, enhanced, black_scores)
-            #         black_boxes, black_scores, black_res = \
-            #             filter_box(black_boxes, black_scores, black_res, black_box_threshold)
-            #     black_results = [enhanced, black_boxes, black_scores]
-            #     merged_res = self.BE.ensemble_box(black_res, gray_res)
-            #
-            #     track_pred = copy.deepcopy(frame)
-            #     iou_img,img_size_ls = copy.deepcopy(img_black),copy.deepcopy(img_black)
-            #
-            #     self.HP.vis_box_size(img_box_ratio, img_size_ls)
-            #     self.IDV.plot_bbox_id(self.id2bbox, track_pred, color=("red", "purple"), with_bbox=True)
-            #     self.IDV.plot_bbox_id(self.object_tracker.get_pred(), track_pred, color=("yellow", "orange"),
-            #                           id_pos="down",
-            #                           with_bbox=True)
-            #     self.object_tracker.plot_iou_map(iou_img)
-            #
-            #     detection_map = np.concatenate((enhanced, gray_img), axis=1)
-            #     tracking_map = np.concatenate((track_pred, iou_img), axis=1)
-            #     row_1st_map = np.concatenate((detection_map, tracking_map), axis=1)
-            #     box_map = np.concatenate((img_box_ratio, img_size_ls), axis=1)
-            #     rd_map = np.concatenate((rd_cnt, rd_box), axis=1)
-            #     row_2nd_map = np.concatenate((rd_map, box_map), axis=1)
-            #     kps_map = np.concatenate((rgb_kps, black_kps), axis=1)
-            #     cache_map = np.concatenate((frame, img_black), axis=1)
-            #     row_3rd_map = np.concatenate((kps_map, cache_map), axis=1)
-            #     res_map = np.concatenate((row_1st_map, row_2nd_map, row_3rd_map), axis=0)
-
-
-        # return gray_results, black_results, dip_results, res_map
         return gray_results, dip_results, res_map

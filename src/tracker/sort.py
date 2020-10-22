@@ -142,7 +142,7 @@ class KalmanBoxTracker(object):
 
 
 class Sort(object):
-  def __init__(self, max_age=10, min_hits=8):
+  def __init__(self, max_age=1, min_hits=0):
     """
     Sets key parameters for SORT
     """
@@ -160,11 +160,6 @@ class Sort(object):
     KalmanBoxTracker.count = 0
     KalmanBoxTracker.curr_id = []
     self.trackers = []
-    self.tracker_pos = {}
-    self.iou_matrix = []
-    self.id2pred = {}
-    self.mat = [[]]
-    self.frame_count = 0
 
   def draw_iou_mat(self, interval=8):
     if len(self.iou_matrix) < 1:
@@ -266,9 +261,10 @@ class Sort(object):
         #remove dead tracklet
         if trk.time_since_update > self.max_age or \
                 (trk.age < self.min_hits * 0.5 and trk.time_since_update > 0.3 * self.max_age):
+            KalmanBoxTracker.curr_id.remove(self.trackers[i].id)
             self.trackers.pop(i)
 
-    KalmanBoxTracker.curr_id = [trks.id for trks in self.trackers]
+    # KalmanBoxTracker.curr_id = [trks.id for trks in self.trackers]
 
     if len(ret) > 0:
         return np.concatenate(ret)
