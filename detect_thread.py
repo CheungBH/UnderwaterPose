@@ -14,7 +14,7 @@ from queue import Queue
 
 
 class DrownDetector(object):
-    def __init__(self, path,queueSize=3000):
+    def __init__(self, path, queueSize=3000):
         self.path = path
         self.cap = cv2.VideoCapture(path)
         self.stopped = False
@@ -84,50 +84,12 @@ class DrownDetector(object):
             else:
                 self.Q.queue.clear()
 
-
     def start(self):
         # start a thread to read frames from the file video stream
         t = Thread(target=self.update, args=())
         t.daemon = True
         t.start()
         return self
-
-    # def process(self):
-    #     IP.init()
-    #     # IP.object_tracker.init_tracker()
-    #     cnt = 0
-    #     # fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    #     while True:
-    #         ret, frame = self.cap.read()
-    #         start = time.time()
-    #         if ret:
-    #             frame = cv2.resize(frame, config.frame_size)
-    #             fgmask = self.fgbg.apply(frame)
-    #             background = self.fgbg.getBackgroundImage()
-    #
-    #             # gray_res, black_res, dip_res, res_map = IP.process_img(frame, background)
-    #             gray_res, dip_res, res_map = IP.process_img(frame, background)
-    #
-    #             if write_box:
-    #                 write_file(gray_res, self.gray_file, self.gray_score_file)
-    #                 # write_file(black_res, self.black_file, self.black_score_file)
-    #
-    #             # if write_video:
-    #             #     self.out_video.write(res_map)
-    #
-    #             cv2.imshow("res", cv2.resize(res_map, (1440, 840)))
-    #             # out.write(res)
-    #             cnt += 1
-    #             cv2.waitKey(1)
-    #             all_time = time.time()-start
-    #             print("time is:",all_time)
-    #         else:
-    #             self.cap.release()
-    #             # if write_video:
-    #             #     self.out_video.release()
-    #             cv2.destroyAllWindows()
-    #             # self.IP.RP.out.release()
-    #             break
 
 
 if __name__ == '__main__':

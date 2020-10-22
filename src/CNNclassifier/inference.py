@@ -6,13 +6,16 @@ import torch
 import numpy as np
 from torch import nn
 from src.utils.utils import image_normalize
+from src.opt import opt
 import cv2
 from src.utils.plot import colors, sizes, thicks
 
-try:
-    from config.config import CNN_backbone, CNN_class, CNN_weight
-except:
-    from src.debug.config.cfg_with_CNN import CNN_backbone, CNN_class, CNN_weight
+CNN_class = opt.CNN_class
+CNN_backbone = opt.CNN_backbone
+CNN_weight = opt.CNN_weight
+
+onnx = opt.onnx
+libtorch = opt.libtorch
 
 
 class CNNInference(object):
@@ -23,6 +26,10 @@ class CNNInference(object):
         else:
             self.model = LeNet(class_nums)
         self.model.load_state_dict(torch.load(model_path, map_location=device))
+        if libtorch:
+            example = torch.rand(2, 3, 224, 224).cuda()
+            traced_model = torch.jit.trace(self.model, example)
+            traced_model.save("CNN_lib.pt")
 
     def predict_result(self, img):
         img_tensor_list = []
