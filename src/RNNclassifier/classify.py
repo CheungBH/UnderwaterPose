@@ -11,17 +11,14 @@ from server_test import server
 import cv2
 import numpy as np
 from src.utils.plot import colors, sizes, thicks
+from config.config import RNN_backbone, RNN_class, RNN_weight
 
-try:
-    from config.config import RNN_backbone, RNN_class, RNN_weight
-except:
-    from src.debug.config.cfg_multi_detections import RNN_backbone, RNN_class, RNN_weight
 
-S = server()
 
 class RNNInference:
     def __init__(self, model_path=RNN_weight):
         self.tester = self.__get_tester(model_path)
+
 
     def __get_tester(self, model):
         # if "ConvLSTM" == RNN_backbone:
@@ -60,7 +57,6 @@ class RNNInference:
 
     def vis_color(self, pred):
         if "drown" in pred:
-            S.connect()
             return colors["red"]
 
         return colors["silver"]

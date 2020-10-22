@@ -20,9 +20,9 @@ from src.RNNclassifier.classify import RNNInference
 from config.config import gray_yolo_cfg, gray_yolo_weights, gray_box_threshold, pose_cfg, pose_weight
 if config.research:
     from config.config import black_yolo_cfg,black_yolo_weights,black_box_threshold
-
+from server_test import server
+from utils.alarm import *
 empty_tensor = torch.empty([0,7])
-
 torch.cuda.set_device(0)
 
 class ImgProcessor:
@@ -44,7 +44,24 @@ class ImgProcessor:
         self.BE = BoxEnsemble(resize_size[0], resize_size[1])
         self.kps = {}
         self.kps_score = {}
+        self.S = server()
         self.resize_size = resize_size
+        self.ser = serial.Serial(
+            port="/dev/ttyUSB0",
+            baudrate=9600#,
+        )
+        print(self.ser.isOpen())
+        self.red_on = [0xA0,0x01,0x01,0xA2]
+        self.yellow_on = [0xA0,0x02,0x01,0xA3]
+        self.green_on = [0xA0,0x03,0x01,0xA4]
+        self.buzzer_on = [0xA0,0x04,0x01,0xA5]
+        self.red_off = [0xA0,0x01,0x00,0xA1]
+        self.yellow_off = [0xA0,0x02,0x00,0xA2]
+        self.green_off = [0xA0,0x03,0x00,0xA3]
+        self.buzzer_off = [0xA0,0x04,0x00,0xA4]
+        self.signal = 0
+        self.alrambox = []
+
         if config.research:
             self.black_yolo = ObjectDetectionYolo(cfg=black_yolo_cfg, weight=black_yolo_weights)
 
@@ -53,6 +70,7 @@ class ImgProcessor:
         self.HP = HumanProcessor(self.resize_size[0], self.resize_size[1])
         self.object_tracker = ObjectTracker()
         self.object_tracker.init_tracker()
+
 
     def process_img(self, frame, background):
         rgb_kps, dip_img, rd_box = \
@@ -77,9 +95,7 @@ class ImgProcessor:
                 gray_boxes, gray_scores, gray_res = \
                     filter_box(gray_boxes, gray_scores, gray_res, gray_box_threshold)
             gray_results = [gray_img, gray_boxes, gray_scores]
-
             merged_res = gray_res
-
             self.id2bbox = self.object_tracker.track(merged_res)
             self.id2bbox = eliminate_nan(self.id2bbox)
             boxes = self.object_tracker.id_and_box(self.id2bbox)
@@ -87,12 +103,19 @@ class ImgProcessor:
             self.HP.update(self.id2bbox)
             self.RP.process_box(boxes, rd_box, rd_cnt)
             warning_idx = self.RP.get_alarmed_box_id(self.id2bbox)
-            danger_idx = self.HP.box_size_warning(warning_idx)
+            danger_idx = self.HP.box_size_warning(warning_idx) #After ratio of the bounding box
 
             if danger_idx:
+                if self.signal == 0:
+                    self.S.connect(1)
+                    self.ser.write(serial.to_bytes(self.green_off))
+                    self.ser.write(serial.to_bytes(self.red_off))
+                    self.ser.write(serial.to_bytes(self.yellow_on))
+                    self.ser.write(serial.to_bytes(self.buzzer_off))
                 danger_id2box = {k:v for k,v in self.id2bbox.items() if k in danger_idx}
                 danger_box = self.object_tracker.id_and_box(danger_id2box)
                 inps, pt1, pt2 = crop_bbox(rgb_kps, danger_box)
+
                 if inps is not None:
                     kps, kps_score, kps_id = self.pose_estimator.process_img(inps, danger_box, pt1, pt2)
                     if self.kps is not []:
@@ -108,48 +131,35 @@ class ImgProcessor:
                             if self.HP.if_enough_kps(idx):
                                 RNN_res = self.RNN_model.predict_action(self.HP.obtain_kps(idx))
                                 self.HP.update_RNN(idx, RNN_res)
+                                if self.HP.get_RNN_preds(idx)[0] == 'drown' and len(set(self.HP.get_RNN_preds(idx))) == 1 \
+                                        and len(self.HP.get_RNN_preds(idx)) == 5:
+                                    self.ser.write(serial.to_bytes(self.yellow_off))
+                                    self.ser.write(serial.to_bytes(self.red_on))
+                                    self.alrambox.append(danger_id2box.get(idx).tolist()[0]/black_kps.shape[1])
+                                    self.alrambox.append(danger_id2box.get(idx).tolist()[1] / black_kps.shape[0])
+                                    self.alrambox.append(danger_id2box.get(idx).tolist()[2] / black_kps.shape[1])
+                                    self.alrambox.append(danger_id2box.get(idx).tolist()[3] / black_kps.shape[0])
+                                    self.signal = 2
+                                    self.S.connect(2,str(self.alrambox)[1:-1])
+                                    # self.ser.write(serial.to_bytes(self.buzzer_on))
+                                elif self.HP.get_RNN_preds(idx)[0] == 'stand' and len(set(self.HP.get_RNN_preds(idx))) == 1 \
+                                        and len(self.HP.get_RNN_preds(idx)) == 5:
+                                    self.signal = 0
+                                    # self.S.connect(0)
                                 self.RNN_model.vis_RNN_res(n, idx, self.HP.get_RNN_preds(idx), black_kps)
+                                self.alrambox = []
+            else:
+                self.ser.write(serial.to_bytes(self.red_off))
+                self.ser.write(serial.to_bytes(self.yellow_off))
+                self.ser.write(serial.to_bytes(self.buzzer_off))
+                self.ser.write(serial.to_bytes(self.green_on))
+                self.signal = 0
+                # self.S.connect(0)
+
 
             row_1st_map = np.concatenate((gray_img, rd_box), axis=1)
             row_2nd_map = np.concatenate((img_box_ratio, black_kps), axis=1)
             res_map = np.concatenate((row_1st_map, row_2nd_map), axis=0)
 
 
-            # if config.research == True:
-            #     black_boxes, black_scores = empty_tensor, empty_tensor
-            #     # black picture
-            #     enhance_kernel = np.array([[0, -1, 0], [0, 5, 0], [0, -1, 0]])
-            #     enhanced = cv2.filter2D(diff, -1, enhance_kernel)
-            #     black_res = self.black_yolo.process(enhanced)
-            #     if black_res is not None:
-            #         black_boxes, black_scores = self.black_yolo.cut_box_score(black_res)
-            #         self.BBV.visualize(black_boxes, enhanced, black_scores)
-            #         black_boxes, black_scores, black_res = \
-            #             filter_box(black_boxes, black_scores, black_res, black_box_threshold)
-            #     black_results = [enhanced, black_boxes, black_scores]
-            #     merged_res = self.BE.ensemble_box(black_res, gray_res)
-            #
-            #     track_pred = copy.deepcopy(frame)
-            #     iou_img,img_size_ls = copy.deepcopy(img_black),copy.deepcopy(img_black)
-            #
-            #     self.HP.vis_box_size(img_box_ratio, img_size_ls)
-            #     self.IDV.plot_bbox_id(self.id2bbox, track_pred, color=("red", "purple"), with_bbox=True)
-            #     self.IDV.plot_bbox_id(self.object_tracker.get_pred(), track_pred, color=("yellow", "orange"),
-            #                           id_pos="down",
-            #                           with_bbox=True)
-            #     self.object_tracker.plot_iou_map(iou_img)
-            #
-            #     detection_map = np.concatenate((enhanced, gray_img), axis=1)
-            #     tracking_map = np.concatenate((track_pred, iou_img), axis=1)
-            #     row_1st_map = np.concatenate((detection_map, tracking_map), axis=1)
-            #     box_map = np.concatenate((img_box_ratio, img_size_ls), axis=1)
-            #     rd_map = np.concatenate((rd_cnt, rd_box), axis=1)
-            #     row_2nd_map = np.concatenate((rd_map, box_map), axis=1)
-            #     kps_map = np.concatenate((rgb_kps, black_kps), axis=1)
-            #     cache_map = np.concatenate((frame, img_black), axis=1)
-            #     row_3rd_map = np.concatenate((kps_map, cache_map), axis=1)
-            #     res_map = np.concatenate((row_1st_map, row_2nd_map, row_3rd_map), axis=0)
-
-
-        # return gray_results, black_results, dip_results, res_map
         return gray_results, dip_results, res_map

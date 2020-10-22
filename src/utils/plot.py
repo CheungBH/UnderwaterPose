@@ -16,17 +16,17 @@ colors = {
 
 sizes = {
     "id": 2,
-    "word": 1,
+    "word": 0.5,
     "point": 4,
-    "table": 2,
-    "alarm": 2,
+    "table": 1,
+    "alarm": 1,
     "list": 2,
 }
 
 thicks = {
     "id": 2,
-    "word": 2,
-    "box": 4,
+    "word": 1,
+    "box": 2,
     "kps": 2,
     "line": 2,
     "table": 3,
