@@ -11,6 +11,8 @@ from .TCN.test_TCN import TCNPredictor
 import cv2
 import numpy as np
 from src.utils.plot import colors, sizes, thicks
+from config.config import RNN_backbone, RNN_class, RNN_weight
+
 
 from src.opt import opt
 
@@ -19,9 +21,11 @@ RNN_backbone = opt.RNN_backbone
 RNN_class = opt.RNN_class
 
 
+
 class RNNInference:
     def __init__(self, model_path=RNN_weight):
         self.tester = self.__get_tester(model_path)
+
 
     def __get_tester(self, model):
         # if "ConvLSTM" == RNN_backbone:
