@@ -18,8 +18,9 @@ rgb_yolo_weights = ""
 
 pose_weight = "weights/sppe/duc_se.pth"
 pose_cfg = None
-
+resize_ratio = 0.5
 video_path = 0#"rtsp://192.168.50.40:554/user=admin&password=Hkumb155&channel=1&stream=0.rsp"#-1
+port = 8888
 
 # video_path = "video/0710/carol.mp4"
 water_top = 40
@@ -58,7 +59,7 @@ frame_size = (720, 540)
 store_size = (frame_size[0]*3, frame_size[1]*3)
 
 black_box_threshold = 0.3
-gray_box_threshold = 0.2
+gray_box_threshold = 0.3
 
 import os
 pose_option = os.path.join("/".join(pose_weight.replace("\\", "/").split("/")[:-1]), "option.pkl")
@@ -73,3 +74,6 @@ if os.path.exists(pose_option):
     output_width = info.outputResW
     input_height = info.inputResH
     input_width = info.inputResW
+
+
+
