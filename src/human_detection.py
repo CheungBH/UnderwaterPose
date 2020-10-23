@@ -46,11 +46,11 @@ class ImgProcessor:
         self.kps_score = {}
         self.S = server()
         self.resize_size = resize_size
-        self.ser = serial.Serial(
-            port="/dev/ttyUSB0",
-            baudrate=9600#,
-        )
-        print(self.ser.isOpen())
+        # self.ser = serial.Serial(
+        #     port="/dev/ttyUSB0",
+        #     baudrate=9600#,
+        # )
+        # print(self.ser.isOpen())
         self.red_on = [0xA0,0x01,0x01,0xA2]
         self.yellow_on = [0xA0,0x02,0x01,0xA3]
         self.green_on = [0xA0,0x03,0x01,0xA4]
@@ -106,12 +106,12 @@ class ImgProcessor:
             danger_idx = self.HP.box_size_warning(warning_idx) #After ratio of the bounding box
 
             if danger_idx:
-                if self.signal == 0:
-                    self.S.connect(1,1)
-                    self.ser.write(serial.to_bytes(self.green_off))
-                    self.ser.write(serial.to_bytes(self.red_off))
-                    self.ser.write(serial.to_bytes(self.yellow_on))
-                    self.ser.write(serial.to_bytes(self.buzzer_off))
+                # if self.signal == 0:
+                    # self.S.connect(1,1)
+                    # self.ser.write(serial.to_bytes(self.green_off))
+                    # self.ser.write(serial.to_bytes(self.red_off))
+                    # self.ser.write(serial.to_bytes(self.yellow_on))
+                    # self.ser.write(serial.to_bytes(self.buzzer_off))
                 danger_id2box = {k:v for k,v in self.id2bbox.items() if k in danger_idx}
                 danger_box = self.object_tracker.id_and_box(danger_id2box)
                 inps, pt1, pt2 = crop_bbox(rgb_kps, danger_box)
@@ -133,26 +133,27 @@ class ImgProcessor:
                                 self.HP.update_RNN(idx, RNN_res)
                                 if self.HP.get_RNN_preds(idx)[0] == 'drown' and len(set(self.HP.get_RNN_preds(idx))) == 1 \
                                         and len(self.HP.get_RNN_preds(idx)) == 5:
-                                    self.ser.write(serial.to_bytes(self.yellow_off))
-                                    self.ser.write(serial.to_bytes(self.red_on))
+
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[0] / black_kps.shape[1])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[1] / black_kps.shape[0])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[2] / black_kps.shape[1])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[3] / black_kps.shape[0])
                                     self.signal = 2
-                                    self.S.connect(2,str(self.alrambox)[1:-1])
+                                    # self.ser.write(serial.to_bytes(self.yellow_off))
+                                    # self.ser.write(serial.to_bytes(self.red_on))
+                                    # self.S.connect(2,str(self.alrambox)[1:-1])
                                     # self.ser.write(serial.to_bytes(self.buzzer_on))
                                 elif self.HP.get_RNN_preds(idx)[0] == 'stand' and len(set(self.HP.get_RNN_preds(idx))) == 1 \
                                         and len(self.HP.get_RNN_preds(idx)) == 5:
                                     self.signal = 0
-                                    self.S.connect(0,0)
+                                    # self.S.connect(0,0)
                                 self.RNN_model.vis_RNN_res(n, idx, self.HP.get_RNN_preds(idx), black_kps)
                                 self.alrambox = []
             else:
-                self.ser.write(serial.to_bytes(self.red_off))
-                self.ser.write(serial.to_bytes(self.yellow_off))
-                self.ser.write(serial.to_bytes(self.buzzer_off))
-                self.ser.write(serial.to_bytes(self.green_on))
+                # self.ser.write(serial.to_bytes(self.red_off))
+                # self.ser.write(serial.to_bytes(self.yellow_off))
+                # self.ser.write(serial.to_bytes(self.buzzer_off))
+                # self.ser.write(serial.to_bytes(self.green_on))
                 self.signal = 0
                 # self.S.connect(0,0)
 
@@ -160,6 +161,6 @@ class ImgProcessor:
             row_2nd_map = np.concatenate((img_box_ratio, black_kps), axis=1)
             res_map = np.concatenate((row_1st_map, row_2nd_map), axis=0)
             sent = cv2.resize(res_map, (320, 240))
-            self.S.connect(sent.data, 0)
+            # self.S.connect(sent.data, 0)
 
         return gray_results, dip_results, res_map
