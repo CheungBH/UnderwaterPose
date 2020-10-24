@@ -4,12 +4,19 @@ import os
 
 "-------------------Outer configuration-----------------------"
 
-video_path = "video/0619_115.mp4"
+video_path = 0#"rtsp://192.168.50.40:554/user=admin&password=Hkumb155&channel=1&stream=0.rsp"#-1
 
-gray_yolo_cfg = "weights/yolo/gray/1010/yolov3-spp-1cls-leaky.cfg"
-gray_yolo_weights = "weights/yolo/gray/1010/best.weights"
-black_yolo_cfg = "weights/yolo/black/1010/yolov3-original-1cls-leaky.cfg"
-black_yolo_weights = "weights/yolo/black/1010/best.weights"
+# gray_yolo_cfg = "weights/yolo/0710/gray/yolov3-spp-1cls.cfg"
+# gray_yolo_weights = "weights/yolo/0710/gray/135_608_best.weights"
+# black_yolo_cfg = "weights/yolo/0710/black/yolov3-spp-1cls.cfg"
+# black_yolo_weights = "weights/yolo/0710/black/150_416_best.weights"
+gray_yolo_cfg = "weights/yolo/small_gray/prune_0.96_keep_0.01_15_shortcut.cfg"
+gray_yolo_weights = "weights/yolo/small_gray/best.weights"
+# black_yolo_cfg = "weights/yolo/0710/black/yolov3-spp-1cls.cfg"
+# black_yolo_weights = "weights/yolo/0710/black/150_416_best.weights"
+rgb_yolo_cfg = ""
+rgb_yolo_weights = ""
+
 black_box_threshold = 0.5122
 gray_box_threshold = 0.526
 
@@ -29,6 +36,8 @@ write_kps = False
 resize_ratio = 0.5
 show_size = (1440, 840)
 store_size = (3840, 2160)
+
+port = 8888
 
 
 "-------------------Inner configuration-----------------------"
