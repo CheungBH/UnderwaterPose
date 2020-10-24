@@ -15,6 +15,7 @@ from threading import Thread
 from queue import Queue
 #https://github.com/Kjue/python-opencv-gpu-video
 
+
 class DrownDetector(object):
     def __init__(self, path,queueSize=3000):
         self.path = path
