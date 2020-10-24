@@ -1,6 +1,6 @@
 import cv2
 from config import config
-from src.human_detection_thread import ImgProcessor
+from src.human_detection import ImgProcessor
 from utils.utils import write_file
 import time
 write_box = False
@@ -8,6 +8,7 @@ write_video = True
 
 resize_ratio = config.resize_ratio
 store_size = config.store_size
+show_size = config.show_size
 
 from threading import Thread
 from queue import Queue
@@ -65,10 +66,10 @@ class DrownDetector(object):
                     frame = cv2.resize(frame, self.resize_size)
                     fgmask = self.fgbg.apply(frame)
                     background = self.fgbg.getBackgroundImage()
-                    gray_res, dip_res, res_map = self.IP.process_img(frame, background)
+                    gray_res, _, dip_res, res_map = self.IP.process_img(frame, background)
                     # if write_video:
                     #     self.out_video.write(res_map)
-                    cv2.imshow("res", cv2.resize(res_map, (1440, 840)))
+                    cv2.imshow("res", cv2.resize(res_map, show_size))
                     # out.write(res)
                     cnt += 1
                     cv2.waitKey(1)

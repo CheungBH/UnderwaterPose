@@ -112,6 +112,7 @@ class ImgProcessor:
 
             if danger_idx:
                 danger_id2box = {k: v for k, v in self.id2bbox.items() if k in danger_idx}
+                self.BBV.visualize(danger_id2box, CNN_img)
                 CNN_result = self.CNN_model.classify(CNN_img, danger_id2box)
                 self.CNN_model.visualize(CNN_img, CNN_result)
 
