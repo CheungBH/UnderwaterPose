@@ -2,14 +2,14 @@ import cv2
 from config import config
 from src.human_detection import ImgProcessor
 import time
+from threading import Thread
+from queue import Queue
+
 write_box = False
 write_video = False
-
 resize_ratio = config.resize_ratio
 store_size = config.store_size
 
-from threading import Thread
-from queue import Queue
 #https://github.com/Kjue/python-opencv-gpu-video
 
 class DrownDetector(object):
@@ -40,11 +40,17 @@ class DrownDetector(object):
         # return next frame in the queue
         return self.Q.get()
 
+    def start(self):
+        # start a thread to read frames from the file video stream
+        t = Thread(target=self.update, args=())
+        t.daemon = True
+        t.start()
+        return self
+
     def update(self):
         # keep looping infinitely
         self.IP.init()
         # IP.object_tracker.init_tracker()
-        cnt = 0
         while True:
             # if the thread indicator variable is set, stop the
             # thread
@@ -59,12 +65,14 @@ class DrownDetector(object):
                     frame = cv2.resize(frame, self.resize_size)
                     fgmask = self.fgbg.apply(frame)
                     background = self.fgbg.getBackgroundImage()
-                    gray_res, dip_res, res_map = self.IP.process_img(frame, background)
+                    # gray_res, dip_res, res_map = self.IP.process_img(frame, background)
+                    mess, res_map = self.IP.process_img(frame, background)
                     # if write_video:
                     #     self.out_video.write(res_map)
-                    cv2.imshow("res", cv2.resize(res_map, (1760, 980)))
+                    # cv2.imshow("res", cv2.resize(res_map, (1760, 980)))
                     # out.write(res)
-                    cnt += 1
+                    if mess == '0':
+                        self.IP.init()
                     cv2.waitKey(1)
                     all_time = time.time() - start
                     print("time is:", all_time)
@@ -79,18 +87,8 @@ class DrownDetector(object):
                 self.Q.queue.clear()
 
 
-    # def start(self):
-    #     # start a thread to read frames from the file video stream
-    #     t = Thread(target=self.update, args=())
-    #     t.daemon = True
-    #     t.start()
-    #     return self
-
-
-
 if __name__ == '__main__':
     DD = DrownDetector(config.video_path)
-    # DD.process()
     DD.update()
 
 

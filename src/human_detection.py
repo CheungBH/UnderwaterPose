@@ -24,6 +24,7 @@ from server_test import server
 from utils.alarm import *
 empty_tensor = torch.empty([0,7])
 torch.cuda.set_device(0)
+import time
 
 class ImgProcessor:
     def __init__(self, resize_size, show_img=True):
@@ -61,6 +62,7 @@ class ImgProcessor:
         self.buzzer_off = [0xA0,0x04,0x00,0xA4]
         self.signal = 0
         self.alrambox = []
+        self.messnew = 1
 
         if config.research:
             self.black_yolo = ObjectDetectionYolo(cfg=black_yolo_cfg, weight=black_yolo_weights)
@@ -104,10 +106,10 @@ class ImgProcessor:
             self.RP.process_box(boxes, rd_box, rd_cnt)
             warning_idx = self.RP.get_alarmed_box_id(self.id2bbox)
             danger_idx = self.HP.box_size_warning(warning_idx) #After ratio of the bounding box
-
+            self.messnew = 1
             if danger_idx:
-                # if self.signal == 0:
-                    # self.S.connect(1,1)
+                if self.signal == 0:
+                    mess = self.S.connect(1,1)
                     # self.ser.write(serial.to_bytes(self.green_off))
                     # self.ser.write(serial.to_bytes(self.red_off))
                     # self.ser.write(serial.to_bytes(self.yellow_on))
@@ -132,21 +134,23 @@ class ImgProcessor:
                                 RNN_res = self.RNN_model.predict_action(self.HP.obtain_kps(idx))
                                 self.HP.update_RNN(idx, RNN_res)
                                 if self.HP.get_RNN_preds(idx)[0] == 'drown' and len(set(self.HP.get_RNN_preds(idx))) == 1 \
-                                        and len(self.HP.get_RNN_preds(idx)) == 5:
+                                        and len(self.HP.get_RNN_preds(idx)) == 8:
 
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[0] / black_kps.shape[1])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[1] / black_kps.shape[0])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[2] / black_kps.shape[1])
                                     self.alrambox.append(danger_id2box.get(idx).tolist()[3] / black_kps.shape[0])
                                     self.signal = 2
+
+                                    mess = self.S.connect(2,str(self.alrambox)[1:-1])
+
                                     # self.ser.write(serial.to_bytes(self.yellow_off))
                                     # self.ser.write(serial.to_bytes(self.red_on))
-                                    # self.S.connect(2,str(self.alrambox)[1:-1])
                                     # self.ser.write(serial.to_bytes(self.buzzer_on))
                                 elif self.HP.get_RNN_preds(idx)[0] == 'stand' and len(set(self.HP.get_RNN_preds(idx))) == 1 \
-                                        and len(self.HP.get_RNN_preds(idx)) == 5:
+                                        and len(self.HP.get_RNN_preds(idx)) == 8:
                                     self.signal = 0
-                                    # self.S.connect(0,0)
+                                    # mess = self.S.connect(0,0)
                                 self.RNN_model.vis_RNN_res(n, idx, self.HP.get_RNN_preds(idx), black_kps)
                                 self.alrambox = []
             else:
@@ -155,12 +159,21 @@ class ImgProcessor:
                 # self.ser.write(serial.to_bytes(self.buzzer_off))
                 # self.ser.write(serial.to_bytes(self.green_on))
                 self.signal = 0
-                # self.S.connect(0,0)
 
             row_1st_map = np.concatenate((gray_img, rd_box), axis=1)
             row_2nd_map = np.concatenate((img_box_ratio, black_kps), axis=1)
             res_map = np.concatenate((row_1st_map, row_2nd_map), axis=0)
-            sent = cv2.resize(res_map, (320, 240))
-            # self.S.connect(sent.data, 0)
+            mess = self.S.connect(self.signal,0)
 
-        return gray_results, dip_results, res_map
+            if mess == '0':
+                self.signal = 0
+                self.messnew = mess
+                self.init()
+                sent = cv2.resize(res_map, (320, 240))
+                mess = self.S.connect(sent.data, 0)
+                mess = self.S.connect(0, 0)
+            else:
+                sent = cv2.resize(res_map, (320, 240))
+                mess = self.S.connect(sent.data, 0)
+
+        return self.messnew, res_map
