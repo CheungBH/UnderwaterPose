@@ -34,15 +34,16 @@ class PoseEstimator:
             raise ValueError("Not a backbone!")
         if device != "cpu":
             self.pose_model.cuda()
-            self.pose_model.eval()
+        self.pose_model.eval()
         inf_time = get_inference_time(self.pose_model, height=input_height, width=input_width)
         flops = print_model_param_flops(self.pose_model)
         params = print_model_param_nums(self.pose_model)
         print("Pose estimation: Inference time {}s, Params {}, FLOPs {}".format(inf_time, params, flops))
         if libtorch:
-            example = torch.rand(2, 3, 224, 224)
-            traced_model = torch.jit.trace(self.pose_model, example)
-            traced_model.save("pose_lib.pt")
+            with torch.no_grad():
+                example = torch.rand(2, 3, 320, 256).cuda()
+                traced_model = torch.jit.trace(self.pose_model, example)
+                traced_model.save("pose_lib.pt")
         self.batch_size = pose_batch
 
     def process_img(self, inps, boxes, pt1, pt2):

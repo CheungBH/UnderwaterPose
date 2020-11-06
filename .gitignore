@@ -52,3 +52,4 @@ yolo_asff/
 img
 __pycache__
 output.avi
+*.pt

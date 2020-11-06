@@ -11,7 +11,7 @@ from .TCN.test_TCN import TCNPredictor
 import cv2
 import numpy as np
 from src.utils.plot import colors, sizes, thicks
-
+import torch
 from src.opt import opt
 
 RNN_weight = opt.RNN_weight
@@ -20,8 +20,13 @@ RNN_class = opt.RNN_class
 
 
 class RNNInference:
-    def __init__(self, model_path=RNN_weight):
+    def __init__(self, model_path=RNN_weight, to_libtorch=False):
         self.tester = self.__get_tester(model_path)
+        if to_libtorch:
+            with torch.no_grad:
+                example = torch.rand(1, 34, 4)
+                traced_model = torch.jit.trace(self.tester.model, example)
+                traced_model.save("tcn_lib.pt")
 
     def __get_tester(self, model):
         # if "ConvLSTM" == RNN_backbone:

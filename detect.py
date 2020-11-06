@@ -75,13 +75,13 @@ if __name__ == '__main__':
     # import os
     #
     # video_folder = "D:/0619_all_new_name"
-    # dest_folder = video_folder + "_11frame_res_1021"
+    # dest_folder = video_folder + "_12frame_res_1027"
     # os.makedirs(dest_folder, exist_ok=True)
     #
     # for v_name in os.listdir(video_folder):
     #     video = os.path.join(video_folder, v_name)
     #     DD = DrownDetector(video)
     #     DD.process()
-
-        # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
-        # shutil.move("output.avi", os.path.join(dest_folder, v_name))
+    #
+    #     # shutil.copy("output2.mp4", os.path.join(dest_folder, "rd_" + v_name))
+    #     shutil.move("output.avi", os.path.join(dest_folder, v_name))

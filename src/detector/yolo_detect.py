@@ -34,10 +34,10 @@ class ObjectDetectionYolo(object):
         flops = print_model_param_flops(self.det_model, input_width=input_size, input_height=input_size)
         params = print_model_param_nums(self.det_model)
         print("Detection: Inference time {}s, Params {}, FLOPs {}".format(inf_time, params, flops))
-        if libtorch:
-            example = torch.rand(2, 3, 224, 224)
-            traced_model = torch.jit.trace(self.det_model, example)
-            traced_model.save("det_lib.pt")
+        # if libtorch:
+        #     example = torch.rand(2, 3, 224, 224).cuda()
+        #     traced_model = torch.jit.trace(self.det_model, example)
+        #     traced_model.save("det_lib.pt")
         self.det_model.eval()
         self.im_dim_list = []
         self.batchSize = batchSize
